@@ -3,6 +3,7 @@ import { SHAPES } from './shapes.js';
 import { levelConfig } from './levels.js';
 import { spawnPlan } from './difficulty.js';
 import { bulletHits, clawHit } from './collision.js';
+import { pointsFor, levelBonus, extraLivesEarned } from './scoring.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const K = 0.12; // depth: scale of the far rim relative to the near rim
@@ -68,6 +69,11 @@ function setState(s) {
   cv.dataset.state = s;
 }
 function setScore(v) {
+  const gained = extraLivesEarned(score, v);
+  if (gained > 0) {
+    lives += gained;
+    sfx(600, 1400, 0.4, 'square', 0.05);
+  }
   score = v;
   cv.dataset.score = v;
 }
@@ -323,7 +329,7 @@ function update(dt) {
     const [x, y] = Q(hit.lane + (hit.flip ? hit.flip.d * ease(hit.flip.t) : 0) + 0.5, hit.z);
     burst(x, y, FOE, 14, 200);
     sfx(300, 40, 0.25, 'sawtooth', 0.05);
-    setScore(score + 150);
+    setScore(score + pointsFor(hit.type || 'flipper', level));
     ents.splice(ents.indexOf(hit), 1);
     bullets.splice(bi, 1);
   }
@@ -338,6 +344,7 @@ function update(dt) {
   if (spawnLeft === 0 && ents.length === 0) {
     phase = 'out';
     phaseT = 0;
+    setScore(score + levelBonus(level));
     sfx(200, 1200, 0.7, 'triangle', 0.06);
   }
 }
