@@ -195,7 +195,68 @@ const spiker = {
   score: (level) => pointsFor('spiker', level),
 };
 
-export const ENEMY_TYPES = { flipper, tanker, spiker };
+// Pulsar: a quick lane-hopper that periodically electrifies its lane. While
+// the pulse is on, the player sharing that lane dies regardless of depth.
+export const PULSE_PERIOD = 2.2;
+export const PULSE_ON = 0.7;
+
+export const isPulsing = (e) => e.type === 'pulsar' && e.pt > PULSE_PERIOD - PULSE_ON;
+export const pulseHit = (e, playerLane) => isPulsing(e) && !e.flip && e.lane === playerLane;
+
+const pulsar = {
+  create({ web, plan, rng = Math.random }) {
+    return {
+      type: 'pulsar',
+      lane: Math.floor(rng() * web.lanes),
+      z: 0,
+      v: plan.speed * 0.9 * (0.8 + rng() * 0.4),
+      ft: 0.3 + rng() * 0.6,
+      ct: 0.14,
+      pt: rng() * (PULSE_PERIOD - PULSE_ON),
+      flip: null,
+    };
+  },
+  update(e, dt, ctx) {
+    flipper.update(e, dt, ctx);
+    e.pt += dt;
+    if (e.pt >= PULSE_PERIOD) e.pt -= PULSE_PERIOD;
+  },
+  draw(e, { g, Q, glow }) {
+    const u = visualLane(e);
+    const on = isPulsing(e);
+    const col = on ? '#ffffff' : '#c040ff';
+    glow(col, on ? 8 : 3);
+    const a = Q(u, e.z),
+      b = Q(u + 1, e.z),
+      m = Q(u + 0.5, e.z);
+    g.beginPath();
+    g.moveTo(a[0], a[1]);
+    g.lineTo(m[0], m[1] - 6);
+    g.lineTo(b[0], b[1]);
+    g.lineTo(m[0], m[1] + 6);
+    g.closePath();
+    g.stroke();
+    if (on) {
+      // electric arc down the whole lane
+      const lo = Q(u + 0.5, 0),
+        hi = Q(u + 0.5, 1);
+      g.beginPath();
+      g.moveTo(lo[0], lo[1]);
+      for (let i = 1; i <= 8; i++) {
+        const t = i / 8,
+          j = i % 2 ? 4 : -4;
+        g.lineTo(lo[0] + (hi[0] - lo[0]) * t + j, lo[1] + (hi[1] - lo[1]) * t - j);
+      }
+      g.stroke();
+    }
+  },
+  onKill() {
+    return [];
+  },
+  score: (level) => pointsFor('pulsar', level),
+};
+
+export const ENEMY_TYPES = { flipper, tanker, spiker, pulsar };
 
 export function enemyType(e) {
   return ENEMY_TYPES[e.type || 'flipper'];

@@ -6,6 +6,10 @@ import {
   growSpike,
   shootSpike,
   spikeHit,
+  isPulsing,
+  pulseHit,
+  PULSE_PERIOD,
+  PULSE_ON,
   SPIKE_SHOT,
   ENEMY_TYPES,
   createEnemy,
@@ -114,5 +118,33 @@ describe('spiker and spikes', () => {
   });
   it('scores 50 at level 1', () => {
     expect(ENEMY_TYPES.spiker.score(1)).toBe(50);
+  });
+});
+
+describe('pulsar', () => {
+  const web = build(SHAPES[0]);
+  const plan = { speed: 0.3 };
+  it('creates a pulsar and electrifies only during the pulse window', () => {
+    const e = createEnemy('pulsar', { web, plan, rng: () => 0.5 });
+    expect(e.type).toBe('pulsar');
+    e.pt = 0;
+    expect(isPulsing(e)).toBe(false);
+    e.pt = PULSE_PERIOD - PULSE_ON + 0.01;
+    expect(isPulsing(e)).toBe(true);
+  });
+  it('shocks the player on its lane at any depth unless mid-flip', () => {
+    const e = createEnemy('pulsar', { web, plan, rng: () => 0.5 });
+    e.pt = PULSE_PERIOD - 0.1;
+    e.z = 0.2;
+    expect(pulseHit(e, e.lane)).toBe(true);
+    expect(pulseHit(e, e.lane + 1)).toBe(false);
+    e.flip = { d: 1, t: 0.1 };
+    expect(pulseHit(e, e.lane)).toBe(false);
+  });
+  it('pulse timer wraps and flipper never pulses', () => {
+    const e = createEnemy('pulsar', { web, plan, rng: () => 0.5 });
+    for (let i = 0; i < 100; i++) ENEMY_TYPES.pulsar.update(e, 0.1, { web, playerLane: 0 });
+    expect(e.pt).toBeLessThan(PULSE_PERIOD);
+    expect(isPulsing({ type: 'flipper', pt: 99 })).toBe(false);
   });
 });

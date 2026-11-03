@@ -8,7 +8,7 @@ describe('spawnPlan', () => {
     expect(p.interval).toBeCloseTo(1.32);
     expect(p.maxAlive).toBe(5);
     expect(p.speed).toBeCloseTo(0.175);
-    expect(p.mix).toEqual({ flipper: 1, tanker: 0, spiker: 0 });
+    expect(p.mix).toEqual({ flipper: 1, tanker: 0, spiker: 0, pulsar: 0 });
   });
   it('scales monotonically', () => {
     for (let n = 1; n < 60; n++) {
@@ -35,6 +35,8 @@ describe('spawnPlan', () => {
     expect(spawnPlan(3).mix.tanker).toBeGreaterThan(0);
     expect(spawnPlan(4).mix.spiker).toBe(0);
     expect(spawnPlan(5).mix.spiker).toBeGreaterThan(0);
+    expect(spawnPlan(6).mix.pulsar).toBe(0);
+    expect(spawnPlan(7).mix.pulsar).toBeGreaterThan(0);
   });
 });
 

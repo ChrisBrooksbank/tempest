@@ -1,5 +1,5 @@
 // Pure difficulty scaling: level -> spawn parameters and enemy type mix.
-const UNLOCK = { flipper: 1, tanker: 3, spiker: 5 };
+const UNLOCK = { flipper: 1, tanker: 3, spiker: 5, pulsar: 7 };
 
 function mixFor(n) {
   const weights = {};

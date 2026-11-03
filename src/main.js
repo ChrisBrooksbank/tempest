@@ -12,6 +12,7 @@ import {
   newSpikes,
   shootSpike,
   spikeHit,
+  pulseHit,
 } from './enemies.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
@@ -332,7 +333,10 @@ function update(dt) {
   }
 
   // enemies vs claw
-  if (ents.some((e) => clawHit(e, player.lane)) || spikeHit(spikes, player.lane)) {
+  if (
+    ents.some((e) => clawHit(e, player.lane) || pulseHit(e, player.lane)) ||
+    spikeHit(spikes, player.lane)
+  ) {
     kill();
     return;
   }
