@@ -71,7 +71,66 @@ const flipper = {
   score: (level) => pointsFor('flipper', level),
 };
 
-export const ENEMY_TYPES = { flipper };
+// Lanes for the two flippers a tanker releases: both neighbours, or (at an
+// open-web edge) the tanker's own lane plus the one neighbour that exists.
+export function splitLanes(web, lane) {
+  const a = step(web, lane, -1),
+    b = step(web, lane, 1);
+  if (a === lane) return [lane, b];
+  if (b === lane) return [a, lane];
+  return [a, b];
+}
+
+const tanker = {
+  create({ web, plan, rng = Math.random }) {
+    return {
+      type: 'tanker',
+      lane: Math.floor(rng() * web.lanes),
+      z: 0,
+      v: plan.speed * 0.6 * (0.8 + rng() * 0.4),
+      ft: 0.8 + rng(),
+      ct: 0.2,
+      flip: null,
+    };
+  },
+  update(e, dt, ctx) {
+    // Slower, steadier lane-changer; at the rim it still hunts the player.
+    flipper.update(e, dt, ctx);
+  },
+  draw(e, { g, Q, glow }) {
+    const u = visualLane(e);
+    const a = Q(u, e.z),
+      b = Q(u + 1, e.z);
+    const c = Q(u + 0.5, Math.min(1, e.z + 0.05)),
+      d = Q(u + 0.5, Math.max(0, e.z - 0.05));
+    glow('#ffb000', 4);
+    g.beginPath();
+    g.moveTo(c[0], c[1]);
+    g.lineTo(b[0], b[1]);
+    g.lineTo(d[0], d[1]);
+    g.lineTo(a[0], a[1]);
+    g.closePath();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(a[0], a[1]);
+    g.lineTo(b[0], b[1]);
+    g.stroke();
+  },
+  onKill(e, { web }) {
+    return splitLanes(web, e.lane).map((lane) => ({
+      type: 'flipper',
+      lane,
+      z: e.z,
+      v: e.v / 0.6,
+      ft: 0.5,
+      ct: 0.12,
+      flip: null,
+    }));
+  },
+  score: (level) => pointsFor('tanker', level),
+};
+
+export const ENEMY_TYPES = { flipper, tanker };
 
 export function enemyType(e) {
   return ENEMY_TYPES[e.type || 'flipper'];

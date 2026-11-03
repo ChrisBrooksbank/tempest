@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { build } from '../src/web.js';
 import { SHAPES } from '../src/shapes.js';
-import { ENEMY_TYPES, createEnemy, enemyType, visualLane } from '../src/enemies.js';
+import { ENEMY_TYPES, createEnemy, enemyType, visualLane, splitLanes } from '../src/enemies.js';
 
 const web = build(SHAPES[0]);
 const plan = { speed: 0.2 };
@@ -35,5 +35,29 @@ describe('flipper', () => {
     expect(visualLane({ lane: 2, flip: null })).toBe(2);
     expect(ENEMY_TYPES.flipper.onKill({}, { web })).toEqual([]);
     expect(ENEMY_TYPES.flipper.score(1)).toBe(150);
+  });
+});
+
+describe('tanker', () => {
+  const open = build(SHAPES.find((s) => !build(s).closed));
+  it('is slower than a flipper at the same plan', () => {
+    const t = createEnemy('tanker', { web, plan, rng: () => 0.5 });
+    const f = createEnemy('flipper', { web, plan, rng: () => 0.5 });
+    expect(t.type).toBe('tanker');
+    expect(t.v).toBeLessThan(f.v);
+  });
+  it('splits into two flippers on adjacent lanes (closed wrap)', () => {
+    expect(splitLanes(web, 0).sort((a, b) => a - b)).toEqual([1, web.lanes - 1]);
+    const t = createEnemy('tanker', { web, plan, rng: () => 0.5 });
+    t.lane = 0;
+    t.z = 0.4;
+    const kids = ENEMY_TYPES.tanker.onKill(t, { web });
+    expect(kids).toHaveLength(2);
+    expect(kids.every((k) => k.type === 'flipper' && k.z === 0.4 && !k.flip)).toBe(true);
+  });
+  it('clamps at open-web edges', () => {
+    expect(splitLanes(open, 0).sort()).toEqual([0, 1]);
+    const last = open.lanes - 1;
+    expect(splitLanes(open, last).sort((a, b) => a - b)).toEqual([last - 1, last]);
   });
 });

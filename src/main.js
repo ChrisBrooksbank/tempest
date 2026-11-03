@@ -1,10 +1,10 @@
 import { build, step, wdiff, dirTo, startLane } from './web.js';
 import { SHAPES } from './shapes.js';
 import { levelConfig } from './levels.js';
-import { spawnPlan } from './difficulty.js';
+import { spawnPlan, pickType } from './difficulty.js';
 import { bulletHits, clawHit } from './collision.js';
 import { levelBonus, extraLivesEarned } from './scoring.js';
-import { createEnemy, enemyType, visualLane } from './enemies.js';
+import { ENEMY_TYPES, createEnemy, enemyType, visualLane } from './enemies.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const K = 0.12; // depth: scale of the far rim relative to the near rim
@@ -194,7 +194,10 @@ function burst(x, y, col, n, speed) {
   }
 }
 function spawn() {
-  ents.push(createEnemy('flipper', { web, plan: spawnPlan(level) }));
+  const plan = spawnPlan(level);
+  const mix = {};
+  for (const t of Object.keys(plan.mix)) if (ENEMY_TYPES[t]) mix[t] = plan.mix[t];
+  ents.push(createEnemy(pickType(mix), { web, plan }));
 }
 function kill() {
   const [x, y] = Q(player.pu + 0.5, 1);
