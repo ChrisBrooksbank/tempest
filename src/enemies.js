@@ -130,7 +130,72 @@ const tanker = {
   score: (level) => pointsFor('tanker', level),
 };
 
-export const ENEMY_TYPES = { flipper, tanker };
+// -- Spikes -------------------------------------------------------------------
+// spikes[lane] = length (0 none .. 1 reaches the rim). Laid by spikers, shortened by shots.
+export const SPIKE_DANGER = 0.85; // a spike this long on the player's lane kills
+export const SPIKE_SHOT = 0.12; // length removed per bullet hit
+
+export const newSpikes = (web) => new Array(web.lanes).fill(0);
+
+export function growSpike(spikes, lane, z) {
+  if (z > spikes[lane]) spikes[lane] = z;
+}
+
+// A bullet at depth z hits the spike if it has reached the spike's tip.
+// Returns true when the bullet is absorbed (and shortens the spike).
+export function shootSpike(spikes, lane, z) {
+  const len = spikes[lane];
+  if (len <= 0 || z > len) return false;
+  spikes[lane] = len - SPIKE_SHOT < 0.02 ? 0 : len - SPIKE_SHOT;
+  return true;
+}
+
+export const spikeHit = (spikes, playerLane) => spikes[playerLane] >= SPIKE_DANGER;
+
+const spiker = {
+  create({ web, plan, rng = Math.random }) {
+    return {
+      type: 'spiker',
+      lane: Math.floor(rng() * web.lanes),
+      z: 0,
+      v: plan.speed * 0.8 * (0.8 + rng() * 0.4),
+      target: 0.5 + rng() * 0.45, // depth it climbs to before retreating
+      retreat: false,
+      gone: false,
+      flip: null,
+    };
+  },
+  update(e, dt, { spikes }) {
+    if (!e.retreat) {
+      e.z = Math.min(e.target, e.z + e.v * dt);
+      if (e.z >= e.target) e.retreat = true;
+    } else {
+      e.z = Math.max(0, e.z - e.v * 1.5 * dt);
+      if (e.z <= 0) e.gone = true;
+    }
+    if (spikes) growSpike(spikes, e.lane, e.z);
+  },
+  draw(e, { g, Q, glow }) {
+    const u = e.lane,
+      cz = e.z,
+      mid = Q(u + 0.5, cz);
+    glow('#4dff88', 3);
+    // coiled zig-zag across the lane
+    g.beginPath();
+    g.moveTo(mid[0], mid[1]);
+    for (let i = 0; i <= 6; i++) {
+      const p = Q(u + (i % 2 ? 0.85 : 0.15), Math.max(0, cz - 0.045 * i * 0.7));
+      g.lineTo(p[0], p[1]);
+    }
+    g.stroke();
+  },
+  onKill() {
+    return [];
+  },
+  score: (level) => pointsFor('spiker', level),
+};
+
+export const ENEMY_TYPES = { flipper, tanker, spiker };
 
 export function enemyType(e) {
   return ENEMY_TYPES[e.type || 'flipper'];

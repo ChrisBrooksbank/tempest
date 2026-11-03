@@ -4,7 +4,15 @@ import { levelConfig } from './levels.js';
 import { spawnPlan, pickType } from './difficulty.js';
 import { bulletHits, clawHit } from './collision.js';
 import { levelBonus, extraLivesEarned } from './scoring.js';
-import { ENEMY_TYPES, createEnemy, enemyType, visualLane } from './enemies.js';
+import {
+  ENEMY_TYPES,
+  createEnemy,
+  enemyType,
+  visualLane,
+  newSpikes,
+  shootSpike,
+  spikeHit,
+} from './enemies.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const K = 0.12; // depth: scale of the far rim relative to the near rim
@@ -54,7 +62,8 @@ let state = 'title',
   score = 0,
   lives = 3,
   overT = 0;
-let ents = [],
+let spikes = [],
+  ents = [],
   bullets = [],
   sparks = [],
   spawnLeft = 0,
@@ -86,6 +95,7 @@ function startLevel(n) {
   color = cfg.color;
   ents = [];
   bullets = [];
+  spikes = newSpikes(web);
   spawnLeft = spawnPlan(n).count;
   spawnT = 1;
   player.lane = player.target = player.pu = startLane(web);
@@ -293,7 +303,18 @@ function update(dt) {
   }
 
   // enemies
-  for (const e of ents) enemyType(e).update(e, dt, { web, playerLane: player.lane });
+  for (const e of ents) enemyType(e).update(e, dt, { web, playerLane: player.lane, spikes });
+  ents = ents.filter((e) => !e.gone);
+
+  // shots vs spikes
+  for (let bi = bullets.length - 1; bi >= 0; bi--) {
+    const b = bullets[bi];
+    if (shootSpike(spikes, b.lane, b.z)) {
+      const [x, y] = Q(b.lane + 0.5, b.z);
+      burst(x, y, '#4dff88', 5, 120);
+      bullets.splice(bi, 1);
+    }
+  }
 
   // shots vs enemies
   for (let bi = bullets.length - 1; bi >= 0; bi--) {
@@ -311,7 +332,7 @@ function update(dt) {
   }
 
   // enemies vs claw
-  if (ents.some((e) => clawHit(e, player.lane))) {
+  if (ents.some((e) => clawHit(e, player.lane)) || spikeHit(spikes, player.lane)) {
     kill();
     return;
   }
@@ -438,6 +459,16 @@ function draw() {
       g.lineTo(q[0], q[1]);
       g.stroke();
     }
+    glow('#4dff88', 1.6);
+    g.beginPath();
+    spikes.forEach((len, i) => {
+      if (len <= 0) return;
+      const a = Q(i + 0.5, 0),
+        b = Q(i + 0.5, len);
+      g.moveTo(a[0], a[1]);
+      g.lineTo(b[0], b[1]);
+    });
+    g.stroke();
     for (const e of ents) drawEnemy(e);
     if (phase === 'run') drawPlayer();
   }

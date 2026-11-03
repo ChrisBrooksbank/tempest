@@ -1,7 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { build } from '../src/web.js';
 import { SHAPES } from '../src/shapes.js';
-import { ENEMY_TYPES, createEnemy, enemyType, visualLane, splitLanes } from '../src/enemies.js';
+import {
+  newSpikes,
+  growSpike,
+  shootSpike,
+  spikeHit,
+  SPIKE_SHOT,
+  ENEMY_TYPES,
+  createEnemy,
+  enemyType,
+  visualLane,
+  splitLanes,
+} from '../src/enemies.js';
 
 const web = build(SHAPES[0]);
 const plan = { speed: 0.2 };
@@ -59,5 +70,49 @@ describe('tanker', () => {
     expect(splitLanes(open, 0).sort()).toEqual([0, 1]);
     const last = open.lanes - 1;
     expect(splitLanes(open, last).sort((a, b) => a - b)).toEqual([last - 1, last]);
+  });
+});
+
+describe('spiker and spikes', () => {
+  it('climbs to its target laying a spike, then retreats and is removed', () => {
+    const spikes = newSpikes(web);
+    const e = createEnemy('spiker', { web, plan, rng: () => 0.5 });
+    expect(e.type).toBe('spiker');
+    for (let i = 0; i < 200 && !e.retreat; i++) ENEMY_TYPES.spiker.update(e, 0.1, { web, spikes });
+    expect(e.retreat).toBe(true);
+    expect(e.z).toBeCloseTo(e.target);
+    expect(spikes[e.lane]).toBeCloseTo(e.target);
+    for (let i = 0; i < 200 && !e.gone; i++) ENEMY_TYPES.spiker.update(e, 0.1, { web, spikes });
+    expect(e.gone).toBe(true);
+    expect(spikes[e.lane]).toBeCloseTo(e.target); // spike stays
+  });
+  it('growSpike only lengthens', () => {
+    const s = newSpikes(web);
+    growSpike(s, 2, 0.6);
+    growSpike(s, 2, 0.3);
+    expect(s[2]).toBe(0.6);
+  });
+  it('shots shorten spikes, absorb only when reaching the tip, and clear short ones', () => {
+    const s = newSpikes(web);
+    s[1] = 0.5;
+    expect(shootSpike(s, 1, 0.7)).toBe(false);
+    expect(s[1]).toBe(0.5);
+    expect(shootSpike(s, 1, 0.4)).toBe(true);
+    expect(s[1]).toBeCloseTo(0.5 - SPIKE_SHOT);
+    s[1] = 0.1;
+    expect(shootSpike(s, 1, 0.05)).toBe(true);
+    expect(s[1]).toBe(0);
+    expect(shootSpike(s, 1, 0.05)).toBe(false);
+  });
+  it('long spikes hurt a player on that lane only', () => {
+    const s = newSpikes(web);
+    s[3] = 0.9;
+    s[4] = 0.5;
+    expect(spikeHit(s, 3)).toBe(true);
+    expect(spikeHit(s, 4)).toBe(false);
+    expect(spikeHit(s, 5)).toBe(false);
+  });
+  it('scores 50 at level 1', () => {
+    expect(ENEMY_TYPES.spiker.score(1)).toBe(50);
   });
 });
