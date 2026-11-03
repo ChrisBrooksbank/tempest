@@ -3,7 +3,8 @@ import { SHAPES } from './shapes.js';
 import { levelConfig } from './levels.js';
 import { spawnPlan } from './difficulty.js';
 import { bulletHits, clawHit } from './collision.js';
-import { pointsFor, levelBonus, extraLivesEarned } from './scoring.js';
+import { levelBonus, extraLivesEarned } from './scoring.js';
+import { createEnemy, enemyType, visualLane } from './enemies.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const K = 0.12; // depth: scale of the far rim relative to the near rim
@@ -193,14 +194,7 @@ function burst(x, y, col, n, speed) {
   }
 }
 function spawn() {
-  ents.push({
-    lane: Math.floor(Math.random() * web.lanes),
-    z: 0,
-    v: spawnPlan(level).speed * (0.8 + Math.random() * 0.4),
-    ft: 0.4 + Math.random(),
-    ct: 0.12,
-    flip: null,
-  });
+  ents.push(createEnemy('flipper', { web, plan: spawnPlan(level) }));
 }
 function kill() {
   const [x, y] = Q(player.pu + 0.5, 1);
@@ -296,41 +290,20 @@ function update(dt) {
   }
 
   // enemies
-  for (const e of ents) {
-    if (e.z < 1) e.z = Math.min(1, e.z + e.v * dt);
-    if (e.flip) {
-      e.flip.t += dt / 0.28;
-      if (e.flip.t >= 1) {
-        e.lane = step(web, e.lane, e.flip.d);
-        e.flip = null;
-      }
-    } else if (e.z < 1) {
-      e.ft -= dt;
-      if (e.ft <= 0) {
-        const d = Math.random() < 0.5 ? 1 : -1;
-        if (step(web, e.lane, d) !== e.lane) e.flip = { d, t: 0 };
-        e.ft = 0.5 + Math.random() * 1.2;
-      }
-    } else {
-      e.ct -= dt;
-      if (e.ct <= 0) {
-        e.ct = 0.16;
-        const d = dirTo(web, e.lane, player.lane);
-        if (d) e.flip = { d, t: 0 };
-      }
-    }
-  }
+  for (const e of ents) enemyType(e).update(e, dt, { web, playerLane: player.lane });
 
   // shots vs enemies
   for (let bi = bullets.length - 1; bi >= 0; bi--) {
     const b = bullets[bi];
     const hit = ents.find((e) => bulletHits(web, e, b));
     if (!hit) continue;
-    const [x, y] = Q(hit.lane + (hit.flip ? hit.flip.d * ease(hit.flip.t) : 0) + 0.5, hit.z);
+    const [x, y] = Q(visualLane(hit) + 0.5, hit.z);
     burst(x, y, FOE, 14, 200);
     sfx(300, 40, 0.25, 'sawtooth', 0.05);
-    setScore(score + pointsFor(hit.type || 'flipper', level));
+    const kind = enemyType(hit);
+    setScore(score + kind.score(level));
     ents.splice(ents.indexOf(hit), 1);
+    ents.push(...kind.onKill(hit, { web }));
     bullets.splice(bi, 1);
   }
 
@@ -429,21 +402,7 @@ function drawPlayer() {
 }
 
 function drawEnemy(e) {
-  const u = e.lane + (e.flip ? e.flip.d * ease(e.flip.t) : 0);
-  const a = Q(u, e.z),
-    b = Q(u + 1, e.z);
-  const p = Q(u + 0.5, Math.min(1, e.z + 0.04)),
-    q = Q(u + 0.5, Math.max(0, e.z - 0.04));
-  const tx = (p[0] - q[0]) / 2,
-    ty = (p[1] - q[1]) / 2;
-  glow(FOE, 2);
-  g.beginPath();
-  g.moveTo(a[0] - tx, a[1] - ty);
-  g.lineTo(b[0] + tx, b[1] + ty);
-  g.lineTo(b[0] - tx, b[1] - ty);
-  g.lineTo(a[0] + tx, a[1] + ty);
-  g.closePath();
-  g.stroke();
+  enemyType(e).draw(e, { g, Q, glow, color: FOE });
 }
 
 function text(str, x, y, size, col) {

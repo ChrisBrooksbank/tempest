@@ -24,7 +24,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 - [x] 9. `src/highscores.js`: pure `insertScore(table, entry, max=10)` (sort desc, stable for ties, trim), `qualifies(table, score)`, `sanitizeInitials`; plus `load()/save()` with every localStorage access in try/catch and validation of parsed data. Tests incl. throwing storage stub and corrupt JSON. (spec: scoring-persistence.md)
 
 ### Phase 2 - Gameplay
-- [ ] 10. Refactor enemy code in `src/enemies.js` into a per-type table `{update, draw, onKill, score}`; existing behaviour becomes the `flipper` type. Entities carry `type`. Keep behaviour identical (no tests broken). (spec: gameplay-enemies.md)
+- [x] 10. Refactor enemy code in `src/enemies.js` into a per-type table `{update, draw, onKill, score}`; existing behaviour becomes the `flipper` type. Entities carry `type`. Keep behaviour identical (no tests broken). (spec: gameplay-enemies.md)
 - [ ] 11. Tanker: slower, thicker, on death splits into two flippers on adjacent lanes. Distinct shape/colour. Tests for split lanes (clamp/wrap aware). (spec: gameplay-enemies.md)
 - [ ] 12. Spiker: travels to rim-ward depth, lays a spike on its lane that blocks/hurts and is shortened by shots; retreats. Distinct visual. Tests for spike length logic. (spec: gameplay-enemies.md)
 - [ ] 13. Third+ type (e.g. fuseball/pulsar that rides lane edges or electrifies lane) to give >=4 types total; wire into `spawnPlan` mix. (spec: gameplay-enemies.md)
