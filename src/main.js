@@ -18,7 +18,7 @@ import {
   SLOTS,
 } from './initials.js';
 import { bestScore, tableLines } from './hud.js';
-import { createAudio } from './audio.js';
+import { createAudio, killPreset } from './audio.js';
 import {
   ENEMY_TYPES,
   createEnemy,
@@ -101,7 +101,7 @@ function setScore(v) {
   const gained = extraLivesEarned(score, v);
   if (gained > 0) {
     lives += gained;
-    sfx(600, 1400, 0.4, 'square', 0.05);
+    play('extraLife');
   }
   score = v;
   cv.dataset.score = v;
@@ -135,7 +135,7 @@ function begin() {
 
 // ── Audio ───────────────────────────────────────────────────────────────────
 const audio = createAudio();
-const { wake, sfx } = audio;
+const { wake, play } = audio;
 
 // ── Input ───────────────────────────────────────────────────────────────────
 const KEYS = {
@@ -273,7 +273,7 @@ function zap() {
   if (state !== 'play' || phase !== 'run' || !canZap(zaps, ents)) return;
   zaps--;
   flash = 1;
-  sfx(120, 1500, 0.5, 'sawtooth', 0.07);
+  play('zap');
   for (const e of ents) {
     const [x, y] = Q(visualLane(e) + 0.5, e.z);
     burst(x, y, FOE, 14, 200);
@@ -284,7 +284,7 @@ function zap() {
 function kill() {
   const [x, y] = Q(player.pu + 0.5, 1);
   burst(x, y, CLAW, 40, 360);
-  sfx(520, 40, 0.8, 'sawtooth', 0.07);
+  play('death');
   lives--;
   phase = 'dead';
   phaseT = 0;
@@ -361,7 +361,7 @@ function update(dt) {
   if (held.fire && cooldown <= 0 && bullets.length < 6) {
     bullets.push({ lane: player.lane, z: 0.97 });
     cooldown = 0.11;
-    sfx(900, 200, 0.07);
+    play('fire');
   }
   for (const b of bullets) b.z -= 2.2 * dt;
   bullets = bullets.filter((b) => b.z > 0);
@@ -397,8 +397,8 @@ function update(dt) {
     if (!hit) continue;
     const [x, y] = Q(visualLane(hit) + 0.5, hit.z);
     burst(x, y, FOE, 14, 200);
-    sfx(300, 40, 0.25, 'sawtooth', 0.05);
     const kind = enemyType(hit);
+    play(killPreset(hit.type));
     setScore(score + kind.score(level));
     ents.splice(ents.indexOf(hit), 1);
     ents.push(...kind.onKill(hit, { web }));
@@ -419,7 +419,7 @@ function update(dt) {
     phase = 'out';
     phaseT = 0;
     setScore(score + levelBonus(level));
-    sfx(200, 1200, 0.7, 'triangle', 0.06);
+    play('levelClear');
   }
 }
 

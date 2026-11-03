@@ -100,3 +100,29 @@ describe('createAudio', () => {
     }).not.toThrow();
   });
 });
+
+describe('presets', () => {
+  it('killPreset maps types with flipper fallback', async () => {
+    const { killPreset, PRESETS } = await import('../src/audio.js');
+    for (const t of ['flipper', 'tanker', 'spiker', 'pulsar']) {
+      expect(PRESETS[killPreset(t)]).toBeTruthy();
+    }
+    expect(killPreset('nope')).toBe('killFlipper');
+  });
+
+  it('play schedules every note, is silent when muted or unwoken', async () => {
+    const { PRESETS } = await import('../src/audio.js');
+    const { Ctor, osc } = fakeCtor();
+    const a = createAudio({ storage: memStorage(), AudioContextCtor: Ctor });
+    a.play('levelClear');
+    expect(osc.start).not.toHaveBeenCalled();
+    a.wake();
+    a.play('levelClear');
+    expect(osc.start).toHaveBeenCalledTimes(PRESETS.levelClear.length);
+    osc.start.mockClear();
+    a.setMuted(true);
+    a.play('extraLife');
+    a.play('unknown');
+    expect(osc.start).not.toHaveBeenCalled();
+  });
+});
