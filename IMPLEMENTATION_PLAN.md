@@ -3,7 +3,7 @@
 ## Status
 
 - Planning iterations: 3 (re-verified: no code changes since iteration 1; repo still has only index.html, no package.json/src/tests; plan unchanged)
-- Build iterations: 8
+- Build iterations: 9
 - Last updated: 2026-11-03
 
 ## Tasks
@@ -42,7 +42,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 - [x] 21. Particle tuning per event, cap max particles (pool/limit) for smooth frames, screen shake on death; honour `prefers-reduced-motion` (reduce shake/flash). Pure helper for particle cap + shake amplitude is tested. (spec: audio-effects.md)
 
 ### Phase 5 - Verification
-- [ ] 22. Playwright smoke test (optional, per cb-visual-qa): each shape renders at 3 viewports, no console errors, canvas non-blank. Only if it doesn't bloat deps. (spec: webs-levels.md)
+- [x] 22. Playwright smoke test (optional, per cb-visual-qa): each shape renders at 3 viewports, no console errors, canvas non-blank. Only if it doesn't bloat deps. (spec: webs-levels.md) **Skipped (optional): Playwright + browser download would bloat deps; existing Vitest tests (shapes.test.js, smoke.test.js) cover shape validity.**
 - [ ] 23. Final pass: README controls/roadmap update, confirm all spec checkboxes and acceptance criteria, `npm run check` green.
 
 ## Completed
