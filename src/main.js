@@ -18,6 +18,7 @@ import {
   SLOTS,
 } from './initials.js';
 import { bestScore, tableLines } from './hud.js';
+import { createAudio } from './audio.js';
 import {
   ENEMY_TYPES,
   createEnemy,
@@ -133,29 +134,8 @@ function begin() {
 }
 
 // ── Audio ───────────────────────────────────────────────────────────────────
-let ac;
-function wake() {
-  try {
-    ac = ac || new AudioContext();
-    if (ac.state === 'suspended') ac.resume();
-  } catch {
-    // audio unavailable: sfx() no-ops while ac is null
-  }
-}
-function sfx(f0, f1, d, type = 'square', v = 0.04) {
-  if (!ac) return;
-  const t = ac.currentTime,
-    o = ac.createOscillator(),
-    a = ac.createGain();
-  o.type = type;
-  o.frequency.setValueAtTime(f0, t);
-  o.frequency.exponentialRampToValueAtTime(f1, t + d);
-  a.gain.setValueAtTime(v, t);
-  a.gain.exponentialRampToValueAtTime(0.0001, t + d);
-  o.connect(a).connect(ac.destination);
-  o.start(t);
-  o.stop(t + d);
-}
+const audio = createAudio();
+const { wake, sfx } = audio;
 
 // ── Input ───────────────────────────────────────────────────────────────────
 const KEYS = {
