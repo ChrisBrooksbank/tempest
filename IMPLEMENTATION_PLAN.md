@@ -29,7 +29,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 - [x] 12. Spiker: travels to rim-ward depth, lays a spike on its lane that blocks/hurts and is shortened by shots; retreats. Distinct visual. Tests for spike length logic. (spec: gameplay-enemies.md)
 - [x] 13. Third+ type (e.g. fuseball/pulsar that rides lane edges or electrifies lane) to give >=4 types total; wire into `spawnPlan` mix. (spec: gameplay-enemies.md)
 - [x] 14. Superzapper: one smart bomb per level (key `Z`/`X` or on-screen button), kills all enemies on screen, with flash. Scored via scoring.js. (spec: gameplay-enemies.md Out of Scope: only power-up allowed)
-- [ ] 15. Level flow polish: guard against input lock-up in "in"/"out"/"dead" phases (clear held state, ensure `press()` can't deadlock), clean zoom-through with fading enemies/spikes, loop difficulty after last shape. Add a test of phase-transition state machine if extracted. (spec: webs-levels.md)
+- [x] 15. Level flow polish: guard against input lock-up in "in"/"out"/"dead" phases (clear held state, ensure `press()` can't deadlock), clean zoom-through with fading enemies/spikes, loop difficulty after last shape. Add a test of phase-transition state machine if extracted. (spec: webs-levels.md)
 
 ### Phase 3 - Scoring UI & persistence
 - [ ] 16. HUD: score, lives, level number, high score; high-score table on title screen. (spec: scoring-persistence.md)

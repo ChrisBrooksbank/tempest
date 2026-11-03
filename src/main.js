@@ -4,6 +4,7 @@ import { levelConfig } from './levels.js';
 import { spawnPlan, pickType } from './difficulty.js';
 import { bulletHits, clawHit } from './collision.js';
 import { canZap, superzap } from './superzapper.js';
+import { phaseView, nextPhase, canStart } from './phases.js';
 import { levelBonus, extraLivesEarned } from './scoring.js';
 import {
   ENEMY_TYPES,
@@ -42,7 +43,6 @@ let web,
   zoom = 1,
   alpha = 1;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const ease = (t) => t * t * (3 - 2 * t);
 
 // Point on the web: u = fractional vertex index, z = depth (0 far … 1 rim)
 function Q(u, z) {
@@ -106,6 +106,8 @@ function startLevel(n) {
   flash = 0;
   player.lane = player.target = player.pu = startLane(web);
   phase = 'in';
+  zoom = 0.25;
+  alpha = 0;
   phaseT = 0;
 }
 function begin() {
@@ -156,9 +158,9 @@ const KEYS = {
   KeyZ: 'zap',
   KeyX: 'zap',
 };
-function press() {
+function press(repeat = false) {
   wake();
-  if (state === 'title' || (state === 'over' && overT > 0.8)) begin();
+  if (canStart(state, overT, repeat)) begin();
 }
 addEventListener('keydown', (e) => {
   const k = KEYS[e.code];
@@ -172,7 +174,7 @@ addEventListener('keydown', (e) => {
     return;
   }
   held[k] = true;
-  press();
+  press(e.repeat);
 });
 addEventListener('keyup', (e) => {
   const k = KEYS[e.code];
@@ -208,6 +210,12 @@ cv.addEventListener('pointerup', () => {
 });
 cv.addEventListener('pointercancel', () => {
   held.fire = false;
+});
+cv.addEventListener('lostpointercapture', () => {
+  held.fire = false;
+});
+document.addEventListener('visibilitychange', () => {
+  held.l = held.r = held.fire = false;
 });
 
 // ── Simulation ──────────────────────────────────────────────────────────────
@@ -273,25 +281,21 @@ function update(dt) {
     player.pu += wdiff(web, player.pu, player.lane) * Math.min(1, dt * 30);
   }
 
-  if (phase === 'in') {
-    const e = ease(Math.min(1, phaseT / 0.9));
-    zoom = 0.25 + 0.75 * e;
-    alpha = e;
-    if (phaseT >= 0.9) {
-      phase = 'run';
-      zoom = alpha = 1;
+  if (phase === 'in' || phase === 'out') {
+    const v = phaseView(phase, phaseT);
+    zoom = v.zoom;
+    alpha = v.alpha;
+    if (v.done) {
+      if (phase === 'out') startLevel(level + 1);
+      else {
+        phase = nextPhase(phase);
+        zoom = alpha = 1;
+      }
     }
     return;
   }
-  if (phase === 'out') {
-    const e = ease(Math.min(1, phaseT / 0.9));
-    zoom = 1 + e * 3;
-    alpha = 1 - e;
-    if (phaseT >= 0.9) startLevel(level + 1);
-    return;
-  }
   if (phase === 'dead') {
-    if (phaseT >= 1.2) {
+    if (phaseView('dead', phaseT).done) {
       if (lives > 0) {
         spawnLeft += ents.length;
         ents = [];
@@ -480,7 +484,8 @@ function draw() {
   drawWeb();
   g.globalAlpha = 1;
 
-  if (phase === 'run' || phase === 'dead') {
+  if (phase === 'run' || phase === 'dead' || phase === 'out') {
+    g.globalAlpha = alpha;
     glow('#fff', 2.2);
     for (const b of bullets) {
       const p = Q(b.lane + 0.5, b.z),
@@ -502,6 +507,7 @@ function draw() {
     g.stroke();
     for (const e of ents) drawEnemy(e);
     if (phase === 'run') drawPlayer();
+    g.globalAlpha = 1;
   }
 
   for (const s of sparks) {
