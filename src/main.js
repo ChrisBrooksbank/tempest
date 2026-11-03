@@ -6,7 +6,17 @@ import { bulletHits, clawHit } from './collision.js';
 import { canZap, superzap } from './superzapper.js';
 import { phaseView, nextPhase, canStart } from './phases.js';
 import { levelBonus, extraLivesEarned } from './scoring.js';
-import { load as loadScores } from './highscores.js';
+import { load as loadScores, save as saveScores, qualifies, insertScore } from './highscores.js';
+import {
+  createEntry,
+  moveCursor,
+  setCursor,
+  cycleLetter,
+  typeLetter,
+  backspace,
+  initialsOf,
+  SLOTS,
+} from './initials.js';
 import { bestScore, tableLines } from './hud.js';
 import {
   ENEMY_TYPES,
@@ -68,7 +78,8 @@ let state = 'title',
   overT = 0,
   zaps = 1,
   flash = 0;
-let scores = loadScores(),
+let entry = createEntry(),
+  scores = loadScores(),
   spikes = [],
   ents = [],
   bullets = [],
@@ -161,11 +172,50 @@ const KEYS = {
   KeyZ: 'zap',
   KeyX: 'zap',
 };
+function confirmEntry() {
+  scores = insertScore(scores, { initials: initialsOf(entry), score });
+  saveScores(scores);
+  overT = 0;
+  setState('over');
+}
+// Entry layout shared by drawing and pointer hit-testing.
+function entryLayout() {
+  const u = Math.min(W, H);
+  return { u, gap: u * 0.12, y: cy, okY: cy + u * 0.25 };
+}
+function entryKey(e) {
+  if (e.code === 'ArrowUp') entry = cycleLetter(entry, 1);
+  else if (e.code === 'ArrowDown') entry = cycleLetter(entry, -1);
+  else if (e.code === 'ArrowLeft') entry = moveCursor(entry, -1);
+  else if (e.code === 'ArrowRight') entry = moveCursor(entry, 1);
+  else if (e.code === 'Backspace') entry = backspace(entry);
+  else if (e.code === 'Enter') {
+    if (!e.repeat) confirmEntry();
+  } else if (/^Key[A-Z]$/.test(e.code)) entry = typeLetter(entry, e.code.slice(3));
+  else return false;
+  return true;
+}
+function entryPointer(e) {
+  const { u, gap, y, okY } = entryLayout();
+  const dy = e.clientY - y;
+  if (dy > u * 0.14) {
+    if (e.clientY > okY - u * 0.06) confirmEntry();
+    return;
+  }
+  const slot = Math.round((e.clientX - cx) / gap) + Math.floor(SLOTS / 2);
+  if (slot < 0 || slot >= SLOTS) return;
+  entry = setCursor(entry, slot);
+  entry = cycleLetter(entry, dy < 0 ? 1 : -1);
+}
 function press(repeat = false) {
   wake();
   if (canStart(state, overT, repeat)) begin();
 }
 addEventListener('keydown', (e) => {
+  if (state === 'entry') {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && entryKey(e)) e.preventDefault();
+    return;
+  }
   const k = KEYS[e.code];
   if (!k || e.ctrlKey || e.metaKey || e.altKey) return;
   e.preventDefault();
@@ -202,6 +252,10 @@ function aim(e) {
   player.target = best;
 }
 cv.addEventListener('pointerdown', (e) => {
+  if (state === 'entry') {
+    entryPointer(e);
+    return;
+  }
   cv.setPointerCapture(e.pointerId);
   held.fire = true;
   aim(e);
@@ -310,7 +364,11 @@ function update(dt) {
         bullets = [];
         overT = 0;
         scores = loadScores();
-        setState('over');
+        held.l = held.r = held.fire = false;
+        if (qualifies(scores, score)) {
+          entry = createEntry();
+          setState('entry');
+        } else setState('over');
         phase = 'run';
       }
     }
@@ -536,6 +594,19 @@ function draw() {
     const rows = tableLines(scores);
     if (!rows.length) text('NO SCORES YET', cx, cy + u * 0.01, sz, color);
     rows.forEach((r, i) => text(r, cx, cy + u * 0.01 + i * sz * 1.3, sz, color));
+  } else if (state === 'entry') {
+    const { u: eu, gap, y, okY } = entryLayout();
+    const big = eu * 0.1;
+    text('NEW HIGH SCORE', cx, y - eu * 0.3, Math.max(14, eu * 0.05), CLAW);
+    text(String(score), cx, y - eu * 0.2, Math.max(12, eu * 0.04), color);
+    for (let i = 0; i < SLOTS; i++) {
+      const x = cx + (i - Math.floor(SLOTS / 2)) * gap;
+      const on = i === entry.pos;
+      text(entry.letters[i], x, y, big, on ? CLAW : color);
+      text('▲', x, y - eu * 0.1, big * 0.3, on ? CLAW : color);
+      text('▼', x, y + eu * 0.1, big * 0.3, on ? CLAW : color);
+    }
+    text('OK', cx, okY, Math.max(14, eu * 0.05), FOE);
   } else if (state === 'over') text(String(score), cx, cy, u * 0.12, color);
   else {
     text(String(score), 20, 28, 22, color);

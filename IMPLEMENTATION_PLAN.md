@@ -33,7 +33,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 
 ### Phase 3 - Scoring UI & persistence
 - [x] 16. HUD: score, lives, level number, high score; high-score table on title screen. (spec: scoring-persistence.md)
-- [ ] 17. Initials entry on game over for qualifying scores: keyboard (arrows/letters + Enter) and touch/pointer friendly; save via highscores.js. Existing KEYS map must not swallow letters during entry. (spec: scoring-persistence.md)
+- [x] 17. Initials entry on game over for qualifying scores: keyboard (arrows/letters + Enter) and touch/pointer friendly; save via highscores.js. Existing KEYS map must not swallow letters during entry. (spec: scoring-persistence.md)
 
 ### Phase 4 - Audio & effects
 - [ ] 18. `src/audio.js`: mute state module (`isMuted`, `toggle`, load/save with try/catch localStorage), `sfx()` no-op when muted or when AudioContext unavailable (no console errors). Tests for mute logic with stubbed storage. (spec: audio-effects.md)
