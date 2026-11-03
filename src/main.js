@@ -3,6 +3,7 @@ import { SHAPES } from './shapes.js';
 import { levelConfig } from './levels.js';
 import { spawnPlan, pickType } from './difficulty.js';
 import { bulletHits, clawHit } from './collision.js';
+import { canZap, superzap } from './superzapper.js';
 import { levelBonus, extraLivesEarned } from './scoring.js';
 import {
   ENEMY_TYPES,
@@ -62,7 +63,9 @@ let state = 'title',
   level = 1,
   score = 0,
   lives = 3,
-  overT = 0;
+  overT = 0,
+  zaps = 1,
+  flash = 0;
 let spikes = [],
   ents = [],
   bullets = [],
@@ -99,6 +102,8 @@ function startLevel(n) {
   spikes = newSpikes(web);
   spawnLeft = spawnPlan(n).count;
   spawnT = 1;
+  zaps = 1;
+  flash = 0;
   player.lane = player.target = player.pu = startLane(web);
   phase = 'in';
   phaseT = 0;
@@ -148,6 +153,8 @@ const KEYS = {
   KeyW: 'fire',
   KeyS: 'fire',
   Enter: 'fire',
+  KeyZ: 'zap',
+  KeyX: 'zap',
 };
 function press() {
   wake();
@@ -157,6 +164,13 @@ addEventListener('keydown', (e) => {
   const k = KEYS[e.code];
   if (!k || e.ctrlKey || e.metaKey || e.altKey) return;
   e.preventDefault();
+  if (k === 'zap') {
+    if (!e.repeat) {
+      wake();
+      zap();
+    }
+    return;
+  }
   held[k] = true;
   press();
 });
@@ -210,6 +224,18 @@ function spawn() {
   for (const t of Object.keys(plan.mix)) if (ENEMY_TYPES[t]) mix[t] = plan.mix[t];
   ents.push(createEnemy(pickType(mix), { web, plan }));
 }
+function zap() {
+  if (state !== 'play' || phase !== 'run' || !canZap(zaps, ents)) return;
+  zaps--;
+  flash = 1;
+  sfx(120, 1500, 0.5, 'sawtooth', 0.07);
+  for (const e of ents) {
+    const [x, y] = Q(visualLane(e) + 0.5, e.z);
+    burst(x, y, FOE, 14, 200);
+  }
+  setScore(score + superzap(ents, level).points);
+  ents = [];
+}
 function kill() {
   const [x, y] = Q(player.pu + 0.5, 1);
   burst(x, y, CLAW, 40, 360);
@@ -221,6 +247,7 @@ function kill() {
 
 function update(dt) {
   phaseT += dt;
+  flash = Math.max(0, flash - dt * 3);
   for (const s of sparks) {
     s.x += s.vx * dt;
     s.y += s.vy * dt;
@@ -486,12 +513,17 @@ function draw() {
     g.stroke();
   }
   g.globalAlpha = 1;
+  if (flash > 0) {
+    g.fillStyle = `rgba(255,255,255,${flash * 0.6})`;
+    g.fillRect(0, 0, W, H);
+  }
 
   const u = Math.min(W, H);
   if (state === 'title') text('TEMPEST', cx, cy, u * 0.09, color);
   else if (state === 'over') text(String(score), cx, cy, u * 0.12, color);
   else {
     text(String(score), 20, 28, 22, color);
+    if (zaps > 0) text('ZAP', cx, 28, 16, CLAW);
     glow(CLAW, 1.6);
     for (let i = 0; i < lives; i++) {
       const x = W - 28 - i * 28;
