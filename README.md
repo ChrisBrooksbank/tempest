@@ -6,7 +6,7 @@
 
 ![Gameplay](docs/gameplay.gif)
 
-**One HTML file. Zero dependencies. Infinite neon.**
+**Zero runtime dependencies. Infinite neon.**
 
 </div>
 
@@ -26,16 +26,20 @@ npx serve .
 | -------------------------- | -------------------------------------- | --------------------------- |
 | Scoot around the rim       | `←` `→` or `A` `D`                     | Move the mouse / drag a finger |
 | Pew pew                    | `Space`, `Enter`, `↑` `↓`, `W` `S`     | Click / hold / tap          |
+| Superzapper (once a level) | `Z` or `X`                             | -                           |
+| Mute / unmute              | `M`                                    | On-screen mute button       |
 | Start the game             | Literally any of the above             | Click anywhere              |
 
 Fire is auto-repeat: hold it down and let the claw sing. Your claw snaps to whichever lane your pointer is nearest to, so waving a mouse around like a conductor is a legitimate strategy.
 
 ## 🌀 What's in the box
 
-- **Five web shapes** - circle, square, cross, flat plane and a V - cycling as you progress.
+- **Nine web shapes** - circle, square, cross, flat plane, V, star, heart, figure-eight and steps - cycling as you progress, with difficulty rising on each loop.
+- **Four enemy types** - flippers, tankers, spikers and pulsars - unlocked as levels climb, plus a once-per-level Superzapper.
+- **Scoring** with per-type points, level bonuses, extra lives, and a persistent top-10 high-score table with initials entry.
 - **Six neon colour schemes**, because the tube deserves a mood ring.
 - **Vector-style glow** drawn with canvas strokes and `shadowBlur`. No sprites. No textures. No cheating.
-- **Synthesised sound** via the Web Audio API. Every beep and zap is an oscillator, not a sample.
+- **Synthesised sound** via the Web Audio API. Every beep and zap is an oscillator, not a sample. Mutable, and it respects `prefers-reduced-motion` for shake and flash.
 - **Keyboard *and* pointer input**, so it works on a laptop, a desktop, or a phone you're not supposed to be playing on at work.
 
 ## 📼 A brief and mostly accurate history of Tempest
@@ -69,11 +73,13 @@ The game lives in [`src/main.js`](src/main.js), loaded as a module by [`index.ht
 
 The next wave of work is laid out in [`specs/`](specs/) and tracked in [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md):
 
-- [ ] Real test tooling (Vitest, ESLint, Prettier) and pure, DOM-free game logic
-- [ ] More webs and a proper level progression
-- [ ] More enemy types and nastier behaviour
-- [ ] Scoring and persistent high scores
-- [ ] Richer audio and effects
+- [x] Real test tooling (Vitest, ESLint, Prettier) and pure, DOM-free game logic
+- [x] More webs and a proper level progression
+- [x] More enemy types and nastier behaviour
+- [x] Scoring and persistent high scores
+- [x] Richer audio and effects
+
+Run `npm run check` (lint + format check + tests) before committing.
 
 ## 🤖 How it's built
 

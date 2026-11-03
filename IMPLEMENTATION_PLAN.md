@@ -43,7 +43,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 
 ### Phase 5 - Verification
 - [x] 22. Playwright smoke test (optional, per cb-visual-qa): each shape renders at 3 viewports, no console errors, canvas non-blank. Only if it doesn't bloat deps. (spec: webs-levels.md) **Skipped (optional): Playwright + browser download would bloat deps; existing Vitest tests (shapes.test.js, smoke.test.js) cover shape validity.**
-- [ ] 23. Final pass: README controls/roadmap update, confirm all spec checkboxes and acceptance criteria, `npm run check` green.
+- [x] 23. Final pass: README controls/roadmap update, confirm all spec checkboxes and acceptance criteria, `npm run check` green.
 
 ## Completed
 
