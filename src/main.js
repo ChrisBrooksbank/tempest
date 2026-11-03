@@ -6,6 +6,8 @@ import { bulletHits, clawHit } from './collision.js';
 import { canZap, superzap } from './superzapper.js';
 import { phaseView, nextPhase, canStart } from './phases.js';
 import { levelBonus, extraLivesEarned } from './scoring.js';
+import { load as loadScores } from './highscores.js';
+import { bestScore, tableLines } from './hud.js';
 import {
   ENEMY_TYPES,
   createEnemy,
@@ -66,7 +68,8 @@ let state = 'title',
   overT = 0,
   zaps = 1,
   flash = 0;
-let spikes = [],
+let scores = loadScores(),
+  spikes = [],
   ents = [],
   bullets = [],
   sparks = [],
@@ -306,6 +309,7 @@ function update(dt) {
         ents = [];
         bullets = [];
         overT = 0;
+        scores = loadScores();
         setState('over');
         phase = 'run';
       }
@@ -464,12 +468,12 @@ function drawEnemy(e) {
   enemyType(e).draw(e, { g, Q, glow, color: FOE });
 }
 
-function text(str, x, y, size, col) {
+function text(str, x, y, size, col, align) {
   g.font = `700 ${size}px ui-monospace, Consolas, monospace`;
   g.textBaseline = 'middle';
   if ('letterSpacing' in g) g.letterSpacing = `${size * 0.12}px`;
   glow(col, 1.4);
-  g.textAlign = x === 20 ? 'left' : 'center';
+  g.textAlign = align || (x === 20 ? 'left' : 'center');
   g.strokeText(str, x, y);
 }
 
@@ -525,10 +529,18 @@ function draw() {
   }
 
   const u = Math.min(W, H);
-  if (state === 'title') text('TEMPEST', cx, cy, u * 0.09, color);
-  else if (state === 'over') text(String(score), cx, cy, u * 0.12, color);
+  if (state === 'title') {
+    text('TEMPEST', cx, cy - u * 0.12, u * 0.09, color);
+    const sz = Math.max(11, u * 0.032);
+    text('HIGH SCORES', cx, cy - u * 0.04, sz, CLAW);
+    const rows = tableLines(scores);
+    if (!rows.length) text('NO SCORES YET', cx, cy + u * 0.01, sz, color);
+    rows.forEach((r, i) => text(r, cx, cy + u * 0.01 + i * sz * 1.3, sz, color));
+  } else if (state === 'over') text(String(score), cx, cy, u * 0.12, color);
   else {
     text(String(score), 20, 28, 22, color);
+    text(`HI ${bestScore(scores, score)}`, 20, 54, 13, FOE);
+    text(`LEVEL ${level}`, cx, 54, 13, color);
     if (zaps > 0) text('ZAP', cx, 28, 16, CLAW);
     glow(CLAW, 1.6);
     for (let i = 0; i < lives; i++) {

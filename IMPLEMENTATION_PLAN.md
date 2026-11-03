@@ -32,7 +32,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 - [x] 15. Level flow polish: guard against input lock-up in "in"/"out"/"dead" phases (clear held state, ensure `press()` can't deadlock), clean zoom-through with fading enemies/spikes, loop difficulty after last shape. Add a test of phase-transition state machine if extracted. (spec: webs-levels.md)
 
 ### Phase 3 - Scoring UI & persistence
-- [ ] 16. HUD: score, lives, level number, high score; high-score table on title screen. (spec: scoring-persistence.md)
+- [x] 16. HUD: score, lives, level number, high score; high-score table on title screen. (spec: scoring-persistence.md)
 - [ ] 17. Initials entry on game over for qualifying scores: keyboard (arrows/letters + Enter) and touch/pointer friendly; save via highscores.js. Existing KEYS map must not swallow letters during entry. (spec: scoring-persistence.md)
 
 ### Phase 4 - Audio & effects
