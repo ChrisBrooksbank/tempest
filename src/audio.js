@@ -116,3 +116,16 @@ export function createAudio({
     },
   };
 }
+
+// On-screen mute button: bottom-right square, shared by drawing and hit-testing.
+export function muteButtonRect(W, H) {
+  const size = Math.max(32, Math.min(W, H) * 0.06),
+    margin = size * 0.4;
+  return { x: W - margin - size, y: H - margin - size, size };
+}
+
+export function hitMuteButton(px, py, W, H) {
+  const { x, y, size } = muteButtonRect(W, H),
+    pad = size * 0.25;
+  return px >= x - pad && px <= x + size + pad && py >= y - pad && py <= y + size + pad;
+}

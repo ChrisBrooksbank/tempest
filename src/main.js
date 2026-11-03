@@ -18,7 +18,7 @@ import {
   SLOTS,
 } from './initials.js';
 import { bestScore, tableLines } from './hud.js';
-import { createAudio, killPreset } from './audio.js';
+import { createAudio, killPreset, muteButtonRect, hitMuteButton } from './audio.js';
 import {
   ENEMY_TYPES,
   createEnemy,
@@ -196,6 +196,14 @@ addEventListener('keydown', (e) => {
     if (!e.ctrlKey && !e.metaKey && !e.altKey && entryKey(e)) e.preventDefault();
     return;
   }
+  if (e.code === 'KeyM' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+    if (!e.repeat) {
+      wake();
+      audio.toggle();
+    }
+    return;
+  }
   const k = KEYS[e.code];
   if (!k || e.ctrlKey || e.metaKey || e.altKey) return;
   e.preventDefault();
@@ -234,6 +242,11 @@ function aim(e) {
 cv.addEventListener('pointerdown', (e) => {
   if (state === 'entry') {
     entryPointer(e);
+    return;
+  }
+  if (hitMuteButton(e.clientX, e.clientY, W, H)) {
+    wake();
+    audio.toggle();
     return;
   }
   cv.setPointerCapture(e.pointerId);
@@ -599,6 +612,35 @@ function draw() {
       claw(x - 9, 30, x + 9, 30, 0, -1, 12);
     }
   }
+  if (state !== 'entry') drawMuteButton();
+}
+
+function drawMuteButton() {
+  const { x, y, size } = muteButtonRect(W, H),
+    m = audio.isMuted();
+  g.globalAlpha = 0.8;
+  glow(m ? FOE : color, 1.4);
+  g.strokeRect(x, y, size, size);
+  g.beginPath();
+  g.moveTo(x + size * 0.2, y + size * 0.4);
+  g.lineTo(x + size * 0.35, y + size * 0.4);
+  g.lineTo(x + size * 0.55, y + size * 0.22);
+  g.lineTo(x + size * 0.55, y + size * 0.78);
+  g.lineTo(x + size * 0.35, y + size * 0.6);
+  g.lineTo(x + size * 0.2, y + size * 0.6);
+  g.closePath();
+  if (m) {
+    g.moveTo(x + size * 0.68, y + size * 0.38);
+    g.lineTo(x + size * 0.88, y + size * 0.62);
+    g.moveTo(x + size * 0.88, y + size * 0.38);
+    g.lineTo(x + size * 0.68, y + size * 0.62);
+  } else {
+    g.moveTo(x + size * 0.7, y + size * 0.38);
+    g.lineTo(x + size * 0.78, y + size * 0.5);
+    g.lineTo(x + size * 0.7, y + size * 0.62);
+  }
+  g.stroke();
+  g.globalAlpha = 1;
 }
 
 // ── Loop ────────────────────────────────────────────────────────────────────

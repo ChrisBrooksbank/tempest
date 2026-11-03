@@ -126,3 +126,22 @@ describe('presets', () => {
     expect(osc.start).not.toHaveBeenCalled();
   });
 });
+
+import { muteButtonRect, hitMuteButton } from '../src/audio.js';
+describe('mute button', () => {
+  it('sits inside the viewport at bottom-right', () => {
+    const r = muteButtonRect(800, 600);
+    expect(r.x + r.size).toBeLessThanOrEqual(800);
+    expect(r.y + r.size).toBeLessThanOrEqual(600);
+    expect(r.x).toBeGreaterThan(400);
+    expect(r.y).toBeGreaterThan(300);
+  });
+  it('hit-tests inside and outside', () => {
+    const r = muteButtonRect(800, 600);
+    expect(hitMuteButton(r.x + r.size / 2, r.y + r.size / 2, 800, 600)).toBe(true);
+    expect(hitMuteButton(10, 10, 800, 600)).toBe(false);
+  });
+  it('has a tappable minimum size on small screens', () => {
+    expect(muteButtonRect(300, 300).size).toBeGreaterThanOrEqual(32);
+  });
+});

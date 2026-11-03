@@ -38,7 +38,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 ### Phase 4 - Audio & effects
 - [x] 18. `src/audio.js`: mute state module (`isMuted`, `toggle`, load/save with try/catch localStorage), `sfx()` no-op when muted or when AudioContext unavailable (no console errors). Tests for mute logic with stubbed storage. (spec: audio-effects.md)
 - [x] 19. Distinct SFX presets: fire, kill (per type), player death, level clear, extra life. Keep lazy `wake()` on first gesture. (spec: audio-effects.md)
-- [ ] 20. Mute control: M key + on-screen button (pointer-accessible), persisted. (spec: audio-effects.md)
+- [x] 20. Mute control: M key + on-screen button (pointer-accessible), persisted. (spec: audio-effects.md)
 - [ ] 21. Particle tuning per event, cap max particles (pool/limit) for smooth frames, screen shake on death; honour `prefers-reduced-motion` (reduce shake/flash). Pure helper for particle cap + shake amplitude is tested. (spec: audio-effects.md)
 
 ### Phase 5 - Verification
