@@ -1,3 +1,5 @@
+import { build, step, wdiff, dirTo, startLane } from './web.js';
+
 // ── Config ──────────────────────────────────────────────────────────────────
 const K = 0.12; // depth: scale of the far rim relative to the near rim
 const COLORS = ['#3b6bff', '#18d6e0', '#3dff7a', '#b266ff', '#ff9a2e', '#8aff3d'];
@@ -59,25 +61,6 @@ const SHAPES = [
   },
 ];
 
-// ── Web geometry ────────────────────────────────────────────────────────────
-function build({ closed, sub, corners }) {
-  const pts = [],
-    edges = closed ? corners.length : corners.length - 1;
-  for (let e = 0; e < edges; e++) {
-    const a = corners[e],
-      b = corners[(e + 1) % corners.length];
-    for (let s = 0; s < sub; s++)
-      pts.push([a[0] + ((b[0] - a[0]) * s) / sub, a[1] + ((b[1] - a[1]) * s) / sub]);
-  }
-  if (!closed) pts.push(corners[corners.length - 1]);
-  const m = Math.max(...pts.flat().map(Math.abs));
-  return {
-    closed,
-    pts: pts.map((p) => [p[0] / m, p[1] / m]),
-    lanes: closed ? pts.length : pts.length - 1,
-  };
-}
-
 const cv = document.getElementById('c'),
   g = cv.getContext('2d');
 let W, H, cx, cy, R;
@@ -114,29 +97,6 @@ function Q(u, z) {
     s = R * zoom * Math.pow(K, 1 - z);
   return [cx + (a[0] + (b[0] - a[0]) * f) * s, cy + (a[1] + (b[1] - a[1]) * f) * s];
 }
-const step = (lane, d) =>
-  web.closed ? (lane + d + web.lanes) % web.lanes : clamp(lane + d, 0, web.lanes - 1);
-function wdiff(a, b) {
-  if (!web.closed) return b - a;
-  const L = web.lanes,
-    d = (((b - a) % L) + L) % L;
-  return d > L / 2 ? d - L : d;
-}
-const dirTo = (a, b) => Math.sign(wdiff(a, b));
-function startLane() {
-  if (!web.closed) return web.lanes >> 1;
-  let best = 0,
-    by = -9;
-  for (let i = 0; i < web.lanes; i++) {
-    const y = (web.pts[i][1] + web.pts[(i + 1) % web.lanes][1]) / 2;
-    if (y > by + 1e-6) {
-      by = y;
-      best = i;
-    }
-  }
-  return best;
-}
-
 // ── State ───────────────────────────────────────────────────────────────────
 let state = 'title',
   phase = 'run',
@@ -173,7 +133,7 @@ function startLevel(n) {
   bullets = [];
   spawnLeft = Math.min(6 + n * 3, 30);
   spawnT = 1;
-  player.lane = player.target = player.pu = startLane();
+  player.lane = player.target = player.pu = startLane(web);
   phase = 'in';
   phaseT = 0;
 }
@@ -312,16 +272,16 @@ function update(dt) {
     if (held.l !== held.r) {
       moveT -= dt;
       if (moveT <= 0) {
-        player.target = step(player.lane, held.r ? 1 : -1);
+        player.target = step(web, player.lane, held.r ? 1 : -1);
         moveT = 0.085;
       }
     } else moveT = 0;
     stepT -= dt;
     if (stepT <= 0 && player.lane !== player.target) {
-      player.lane = step(player.lane, dirTo(player.lane, player.target));
+      player.lane = step(web, player.lane, dirTo(web, player.lane, player.target));
       stepT = 0.035;
     }
-    player.pu += wdiff(player.pu, player.lane) * Math.min(1, dt * 30);
+    player.pu += wdiff(web, player.pu, player.lane) * Math.min(1, dt * 30);
   }
 
   if (phase === 'in') {
@@ -387,21 +347,21 @@ function update(dt) {
     if (e.flip) {
       e.flip.t += dt / 0.28;
       if (e.flip.t >= 1) {
-        e.lane = step(e.lane, e.flip.d);
+        e.lane = step(web, e.lane, e.flip.d);
         e.flip = null;
       }
     } else if (e.z < 1) {
       e.ft -= dt;
       if (e.ft <= 0) {
         const d = Math.random() < 0.5 ? 1 : -1;
-        if (step(e.lane, d) !== e.lane) e.flip = { d, t: 0 };
+        if (step(web, e.lane, d) !== e.lane) e.flip = { d, t: 0 };
         e.ft = 0.5 + Math.random() * 1.2;
       }
     } else {
       e.ct -= dt;
       if (e.ct <= 0) {
         e.ct = 0.16;
-        const d = dirTo(e.lane, player.lane);
+        const d = dirTo(web, e.lane, player.lane);
         if (d) e.flip = { d, t: 0 };
       }
     }
@@ -412,7 +372,7 @@ function update(dt) {
     const b = bullets[bi];
     const hit = ents.find(
       (e) =>
-        (e.flip && e.flip.t > 0.5 ? step(e.lane, e.flip.d) : e.lane) === b.lane &&
+        (e.flip && e.flip.t > 0.5 ? step(web, e.lane, e.flip.d) : e.lane) === b.lane &&
         Math.abs(e.z - b.z) < 0.07,
     );
     if (!hit) continue;
