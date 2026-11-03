@@ -17,6 +17,7 @@ import {
   initialsOf,
   SLOTS,
 } from './initials.js';
+import { burstSpec, capParticles, shakeAmplitude, flashPeak } from './effects.js';
 import { bestScore, tableLines } from './hud.js';
 import { createAudio, killPreset, muteButtonRect, hitMuteButton } from './audio.js';
 import {
@@ -34,6 +35,7 @@ import {
 const K = 0.12; // depth: scale of the far rim relative to the near rim
 const CLAW = '#ffe14a',
   FOE = '#ff4d6d';
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const cv = document.getElementById('c'),
   g = cv.getContext('2d');
 let W, H, cx, cy, R;
@@ -78,7 +80,8 @@ let state = 'title',
   lives = 3,
   overT = 0,
   zaps = 1,
-  flash = 0;
+  flash = 0,
+  shakeT = Infinity;
 let entry = createEntry(),
   scores = loadScores(),
   spikes = [],
@@ -269,12 +272,15 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ── Simulation ──────────────────────────────────────────────────────────────
-function burst(x, y, col, n, speed) {
+function burst(x, y, col, event) {
+  const { n, speed } = burstSpec(event, reducedMotion.matches);
+  const made = [];
   for (let i = 0; i < n; i++) {
     const a = Math.random() * Math.PI * 2,
       s = speed * (0.3 + Math.random() * 0.7);
-    sparks.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, l: 1, col });
+    made.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, l: 1, col });
   }
+  sparks = capParticles(sparks, made);
 }
 function spawn() {
   const plan = spawnPlan(level);
@@ -285,18 +291,19 @@ function spawn() {
 function zap() {
   if (state !== 'play' || phase !== 'run' || !canZap(zaps, ents)) return;
   zaps--;
-  flash = 1;
+  flash = flashPeak(reducedMotion.matches);
   play('zap');
   for (const e of ents) {
     const [x, y] = Q(visualLane(e) + 0.5, e.z);
-    burst(x, y, FOE, 14, 200);
+    burst(x, y, FOE, 'zap');
   }
   setScore(score + superzap(ents, level).points);
   ents = [];
 }
 function kill() {
   const [x, y] = Q(player.pu + 0.5, 1);
-  burst(x, y, CLAW, 40, 360);
+  burst(x, y, CLAW, 'death');
+  shakeT = 0;
   play('death');
   lives--;
   phase = 'dead';
@@ -306,6 +313,7 @@ function kill() {
 function update(dt) {
   phaseT += dt;
   flash = Math.max(0, flash - dt * 3);
+  shakeT += dt;
   for (const s of sparks) {
     s.x += s.vx * dt;
     s.y += s.vy * dt;
@@ -398,7 +406,7 @@ function update(dt) {
     const b = bullets[bi];
     if (shootSpike(spikes, b.lane, b.z)) {
       const [x, y] = Q(b.lane + 0.5, b.z);
-      burst(x, y, '#4dff88', 5, 120);
+      burst(x, y, '#4dff88', 'spike');
       bullets.splice(bi, 1);
     }
   }
@@ -409,7 +417,7 @@ function update(dt) {
     const hit = ents.find((e) => bulletHits(web, e, b));
     if (!hit) continue;
     const [x, y] = Q(visualLane(hit) + 0.5, hit.z);
-    burst(x, y, FOE, 14, 200);
+    burst(x, y, FOE, 'kill');
     const kind = enemyType(hit);
     play(killPreset(hit.type));
     setScore(score + kind.score(level));
@@ -529,10 +537,14 @@ function text(str, x, y, size, col, align) {
 }
 
 function draw() {
+  const d = devicePixelRatio || 1;
+  g.setTransform(d, 0, 0, d, 0, 0);
   g.globalAlpha = 1;
   g.shadowBlur = 0;
   g.fillStyle = 'rgba(0,0,0,.35)';
   g.fillRect(0, 0, W, H);
+  const amp = shakeAmplitude(shakeT, reducedMotion.matches);
+  if (amp > 0) g.translate((Math.random() - 0.5) * 2 * amp, (Math.random() - 0.5) * 2 * amp);
   g.lineJoin = g.lineCap = 'round';
 
   g.globalAlpha = alpha;
