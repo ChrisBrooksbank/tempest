@@ -1,6 +1,7 @@
 import { build, step, wdiff, dirTo, startLane } from './web.js';
 import { SHAPES } from './shapes.js';
 import { levelConfig } from './levels.js';
+import { spawnPlan } from './difficulty.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const K = 0.12; // depth: scale of the far rim relative to the near rim
@@ -77,7 +78,7 @@ function startLevel(n) {
   color = cfg.color;
   ents = [];
   bullets = [];
-  spawnLeft = Math.min(6 + n * 3, 30);
+  spawnLeft = spawnPlan(n).count;
   spawnT = 1;
   player.lane = player.target = player.pu = startLane(web);
   phase = 'in';
@@ -188,7 +189,7 @@ function spawn() {
   ents.push({
     lane: Math.floor(Math.random() * web.lanes),
     z: 0,
-    v: Math.min(0.55, 0.16 + 0.015 * level) * (0.8 + Math.random() * 0.4),
+    v: spawnPlan(level).speed * (0.8 + Math.random() * 0.4),
     ft: 0.4 + Math.random(),
     ct: 0.12,
     flip: null,
@@ -278,12 +279,12 @@ function update(dt) {
   bullets = bullets.filter((b) => b.z > 0);
 
   // spawn
-  if (spawnLeft > 0 && ents.length < 4 + level) {
+  if (spawnLeft > 0 && ents.length < spawnPlan(level).maxAlive) {
     spawnT -= dt;
     if (spawnT <= 0) {
       spawn();
       spawnLeft--;
-      spawnT = Math.max(0.5, 1.4 - 0.08 * level);
+      spawnT = spawnPlan(level).interval;
     }
   }
 
