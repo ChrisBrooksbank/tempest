@@ -1,66 +1,11 @@
 import { build, step, wdiff, dirTo, startLane } from './web.js';
+import { SHAPES } from './shapes.js';
+import { levelConfig } from './levels.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const K = 0.12; // depth: scale of the far rim relative to the near rim
-const COLORS = ['#3b6bff', '#18d6e0', '#3dff7a', '#b266ff', '#ff9a2e', '#8aff3d'];
 const CLAW = '#ffe14a',
   FOE = '#ff4d6d';
-const SHAPES = [
-  {
-    closed: true,
-    sub: 1,
-    corners: Array.from({ length: 16 }, (_, i) => {
-      const a = Math.PI / 2 + (i * Math.PI * 2) / 16;
-      return [Math.cos(a), Math.sin(a)];
-    }),
-  },
-  {
-    closed: true,
-    sub: 4,
-    corners: [
-      [-1, 1],
-      [-1, -1],
-      [1, -1],
-      [1, 1],
-    ],
-  },
-  {
-    closed: true,
-    sub: 1,
-    corners: [
-      [-0.5, 1.5],
-      [-0.5, 0.5],
-      [-1.5, 0.5],
-      [-1.5, -0.5],
-      [-0.5, -0.5],
-      [-0.5, -1.5],
-      [0.5, -1.5],
-      [0.5, -0.5],
-      [1.5, -0.5],
-      [1.5, 0.5],
-      [0.5, 0.5],
-      [0.5, 1.5],
-    ],
-  },
-  {
-    closed: false,
-    sub: 14,
-    corners: [
-      [-1, 0.85],
-      [1, 0.85],
-    ],
-  },
-  {
-    closed: false,
-    sub: 7,
-    corners: [
-      [-1, -0.55],
-      [0, 0.85],
-      [1, -0.55],
-    ],
-  },
-];
-
 const cv = document.getElementById('c'),
   g = cv.getContext('2d');
 let W, H, cx, cy, R;
@@ -126,9 +71,10 @@ function setScore(v) {
 }
 
 function startLevel(n) {
+  const cfg = levelConfig(n);
   level = n;
-  web = build(SHAPES[(n - 1) % SHAPES.length]);
-  color = COLORS[(n - 1) % COLORS.length];
+  web = build(SHAPES[cfg.shapeIndex]);
+  color = cfg.color;
   ents = [];
   bullets = [];
   spawnLeft = Math.min(6 + n * 3, 30);

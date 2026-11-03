@@ -3,7 +3,7 @@
 ## Status
 
 - Planning iterations: 3 (re-verified: no code changes since iteration 1; repo still has only index.html, no package.json/src/tests; plan unchanged)
-- Build iterations: 3
+- Build iterations: 4
 - Last updated: 2026-11-03
 
 ## Tasks
@@ -16,7 +16,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 
 ### Phase 1 - Pure logic, with tests
 - [x] 3. Extract web geometry into `src/web.js`: `build(shape)`, `step(web, lane, d)`, `wdiff(web, a, b)`, `dirTo`, `startLane`. Take `web` as a parameter (no globals). Tests: lane counts per shape, closed wrap, open clamp at both edges, wdiff shortest path, startLane. (spec: webs-levels.md)
-- [ ] 4. `src/levels.js`: `levelConfig(level)` returning `{shapeIndex, color, loop}`; shapes cycle, levels past last shape loop with `loop` count (feeds difficulty). Move SHAPES/COLORS to `src/shapes.js`. Tests for mapping incl. wraparound. (spec: webs-levels.md)
+- [x] 4. `src/levels.js`: `levelConfig(level)` returning `{shapeIndex, color, loop}`; shapes cycle, levels past last shape loop with `loop` count (feeds difficulty). Move SHAPES/COLORS to `src/shapes.js`. Tests for mapping incl. wraparound. (spec: webs-levels.md)
 - [ ] 5. Add >=3 new shapes (star, heart, figure-eight, steps) to `src/shapes.js`. Test: every shape builds, has no NaN points, lanes >= 8, normalised to |coord| <= 1, no duplicate adjacent points. Visually check at 3 viewport sizes. (spec: webs-levels.md)
 - [ ] 6. `src/difficulty.js`: pure `spawnPlan(level)` -> `{count, interval, maxAlive, speed, mix:{flipper,tanker,spiker,...}}` replacing the inline formulas (current: count `min(6+3n,30)`, interval `max(.5,1.4-.08n)`, maxAlive `4+n`, speed `min(.55,.16+.015n)`). Type mix unlocks by level (flipper L1, tanker ~L3, spiker ~L5, etc.); level 1 stays flipper-only/easy. Tests: monotonic scaling, caps, level 1 values, mix sums to 1. (spec: gameplay-enemies.md)
 - [ ] 7. `src/collision.js`: pure `bulletHits(enemy, bullet)` and `clawHit(enemy, playerLane)` extracted from update() (flip.t > .5 counts as target lane; |dz| < .07; rim contact when z>=1 and not flipping). Tests for both. (spec: gameplay-enemies.md)
