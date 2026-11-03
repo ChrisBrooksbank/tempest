@@ -2,6 +2,7 @@ import { build, step, wdiff, dirTo, startLane } from './web.js';
 import { SHAPES } from './shapes.js';
 import { levelConfig } from './levels.js';
 import { spawnPlan } from './difficulty.js';
+import { bulletHits, clawHit } from './collision.js';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const K = 0.12; // depth: scale of the far rim relative to the near rim
@@ -317,11 +318,7 @@ function update(dt) {
   // shots vs enemies
   for (let bi = bullets.length - 1; bi >= 0; bi--) {
     const b = bullets[bi];
-    const hit = ents.find(
-      (e) =>
-        (e.flip && e.flip.t > 0.5 ? step(web, e.lane, e.flip.d) : e.lane) === b.lane &&
-        Math.abs(e.z - b.z) < 0.07,
-    );
+    const hit = ents.find((e) => bulletHits(web, e, b));
     if (!hit) continue;
     const [x, y] = Q(hit.lane + (hit.flip ? hit.flip.d * ease(hit.flip.t) : 0) + 0.5, hit.z);
     burst(x, y, FOE, 14, 200);
@@ -332,7 +329,7 @@ function update(dt) {
   }
 
   // enemies vs claw
-  if (ents.some((e) => e.z >= 1 && !e.flip && e.lane === player.lane)) {
+  if (ents.some((e) => clawHit(e, player.lane))) {
     kill();
     return;
   }
