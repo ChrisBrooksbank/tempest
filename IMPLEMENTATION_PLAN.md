@@ -3,7 +3,7 @@
 ## Status
 
 - Planning iterations: 3 (re-verified: no code changes since iteration 1; repo still has only index.html, no package.json/src/tests; plan unchanged)
-- Build iterations: 1
+- Build iterations: 2
 - Last updated: 2026-11-03
 
 ## Tasks
@@ -12,7 +12,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 
 ### Phase 0 - Tooling & module extraction
 - [x] 1. Add package.json (`type: module`), Vitest, ESLint (flat config, browser globals), Prettier, and scripts `test`, `test:run`, `lint`, `format:check`, `check` (lint + format:check + test:run). Add one trivial passing test so `check` is green. Add .gitignore (node_modules). (spec: all; AGENTS.md)
-- [ ] 2. Move the inline script out of index.html into `src/main.js` loaded via `<script type="module">`; behaviour unchanged. Create `src/` layout: `web.js`, `scoring.js`, `difficulty.js`, `enemies.js`, `highscores.js`, `audio.js`, `levels.js`. Update README/AGENTS run note (modules need a static server, `npx serve .`; file:// won't work). (spec: all)
+- [x] 2. Move the inline script out of index.html into `src/main.js` loaded via `<script type="module">`; behaviour unchanged. Create `src/` layout: `web.js`, `scoring.js`, `difficulty.js`, `enemies.js`, `highscores.js`, `audio.js`, `levels.js`. Update README/AGENTS run note (modules need a static server, `npx serve .`; file:// won't work). (spec: all)
 
 ### Phase 1 - Pure logic, with tests
 - [ ] 3. Extract web geometry into `src/web.js`: `build(shape)`, `step(web, lane, d)`, `wdiff(web, a, b)`, `dirTo`, `startLane`. Take `web` as a parameter (no globals). Tests: lane counts per shape, closed wrap, open clamp at both edges, wdiff shortest path, startLane. (spec: webs-levels.md)

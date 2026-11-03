@@ -14,13 +14,9 @@
 
 ## 🕹️ Play it
 
-No install, no build, no 400 MB `node_modules` (yet). Just open the file:
+No build step. The game uses ES modules, so it must be served over HTTP (opening `index.html` via `file://` won't work):
 
 ```bash
-# the lazy way
-open index.html          # or double-click it, we won't judge
-
-# the "I have a server fetish" way
 npx serve .
 ```
 
@@ -62,7 +58,7 @@ Fire is auto-repeat: hold it down and let the claw sing. Your claw snaps to whic
 
 ## 🛠️ Under the hood
 
-The whole game lives in [`index.html`](index.html):
+The game lives in [`src/main.js`](src/main.js), loaded as a module by [`index.html`](index.html):
 
 - **Web geometry** - each web is a list of lane points, projected from a near rim to a shrunken far rim so that flat polygons look like they're falling away into the screen.
 - **Simulation** - player, bullets, enemies, spawning and difficulty all tick in one small loop.

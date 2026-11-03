@@ -10,7 +10,7 @@ Goal: polish & extend the game. Done = all tests pass + each spec's acceptance c
 ## Build / Run
 
 ```bash
-npx serve .            # or open index.html directly in a browser
+npx serve .            # ES modules: needs a static server (file:// will not work)
 ```
 
 ## Test Commands
