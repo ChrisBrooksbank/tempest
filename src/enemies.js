@@ -81,10 +81,14 @@ export function splitLanes(web, lane) {
   return [a, b];
 }
 
+// Tanker tint shows what it carries.
+export const CARGO_TINT = { flipper: '#ffb000', fuseball: '#ff5030', pulsar: '#c040ff' };
+
 const tanker = {
   create({ web, plan, rng = Math.random }) {
     return {
       type: 'tanker',
+      cargo: plan.tankerCargo || 'flipper',
       lane: Math.floor(rng() * web.lanes),
       z: 0,
       v: plan.speed * 0.6 * (0.8 + rng() * 0.4),
@@ -94,8 +98,12 @@ const tanker = {
     };
   },
   update(e, dt, ctx) {
-    // Slower, steadier lane-changer; at the rim it still hunts the player.
+    // Slower, steadier lane-changer; on reaching the top it bursts open.
     flipper.update(e, dt, ctx);
+    if (e.z >= 1) {
+      e.gone = true;
+      e.burst = true;
+    }
   },
   draw(e, { g, Q, glow }) {
     const u = visualLane(e);
@@ -103,7 +111,7 @@ const tanker = {
       b = Q(u + 1, e.z);
     const c = Q(u + 0.5, Math.min(1, e.z + 0.05)),
       d = Q(u + 0.5, Math.max(0, e.z - 0.05));
-    glow('#ffb000', 4);
+    glow(CARGO_TINT[e.cargo] || CARGO_TINT.flipper, 4);
     g.beginPath();
     g.moveTo(c[0], c[1]);
     g.lineTo(b[0], b[1]);
@@ -117,15 +125,13 @@ const tanker = {
     g.stroke();
   },
   onKill(e, { web }) {
-    return splitLanes(web, e.lane).map((lane) => ({
-      type: 'flipper',
-      lane,
-      z: e.z,
-      v: e.v / 0.6,
-      ft: 0.5,
-      ct: 0.12,
-      flip: null,
-    }));
+    const cargo = ENEMY_TYPES[e.cargo] && e.cargo !== 'spiker' ? e.cargo : 'flipper';
+    return splitLanes(web, e.lane).map((lane) => {
+      const kid = ENEMY_TYPES[cargo].create({ web, plan: { speed: e.v / 0.6 } });
+      kid.lane = lane;
+      kid.z = e.z;
+      return kid;
+    });
   },
   score: (level) => pointsFor('tanker', level),
 };

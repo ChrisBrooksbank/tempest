@@ -73,6 +73,32 @@ describe('tanker', () => {
     expect(kids).toHaveLength(2);
     expect(kids.every((k) => k.type === 'flipper' && k.z === 0.4 && !k.flip)).toBe(true);
   });
+  it('carries the plan cargo and releases it when shot', () => {
+    for (const cargo of ['flipper', 'fuseball', 'pulsar']) {
+      const t = createEnemy('tanker', {
+        web,
+        plan: { speed: 0.2, tankerCargo: cargo },
+        rng: () => 0.5,
+      });
+      t.lane = 3;
+      t.z = 0.4;
+      const kids = ENEMY_TYPES.tanker.onKill(t, { web });
+      expect(kids.map((k) => k.type)).toEqual([cargo, cargo]);
+      expect(kids.map((k) => k.lane).sort((a, b) => a - b)).toEqual([2, 4]);
+      expect(kids.every((k) => k.z === 0.4)).toBe(true);
+    }
+  });
+  it('defaults to flipper cargo', () => {
+    expect(createEnemy('tanker', { web, plan, rng: () => 0.5 }).cargo).toBe('flipper');
+  });
+  it('bursts open on reaching the top', () => {
+    const t = createEnemy('tanker', { web, plan, rng: () => 0.5 });
+    t.ft = 99;
+    ENEMY_TYPES.tanker.update(t, 0.1, { web, playerLane: 0 });
+    expect(t.burst).toBeUndefined();
+    ENEMY_TYPES.tanker.update(t, 100, { web, playerLane: 0 });
+    expect(t.gone && t.burst).toBe(true);
+  });
   it('clamps at open-web edges', () => {
     expect(splitLanes(open, 0).sort()).toEqual([0, 1]);
     const last = open.lanes - 1;

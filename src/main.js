@@ -404,6 +404,12 @@ function update(dt) {
 
   // enemies
   for (const e of ents) enemyType(e).update(e, dt, { web, playerLane: player.lane, spikes });
+  for (const e of ents) {
+    if (!e.burst) continue;
+    const [x, y] = Q(e.lane + 0.5, e.z);
+    burst(x, y, FOE, 'kill');
+    ents.push(...enemyType(e).onKill(e, { web }));
+  }
   ents = ents.filter((e) => !e.gone);
 
   // enemy shots: fire, travel, and get shot down by player bullets
