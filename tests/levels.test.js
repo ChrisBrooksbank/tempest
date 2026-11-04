@@ -13,9 +13,11 @@ describe('levelConfig', () => {
     expect(levelConfig(n + 1)).toMatchObject({ shapeIndex: 0, loop: 1 });
     expect(levelConfig(2 * n + 1).loop).toBe(2);
   });
-  it('cycles colours independently', () => {
-    expect(levelConfig(COLORS.length + 1).color).toBe(COLORS[0]);
-    expect(levelConfig(2).color).toBe(COLORS[1]);
+  it('keeps one colour per lap and changes it on the next lap', () => {
+    const n = SHAPES.length;
+    for (let l = 1; l <= n; l++) expect(levelConfig(l).color).toBe(COLORS[0]);
+    expect(levelConfig(n + 1).color).toBe(COLORS[1]);
+    expect(levelConfig(n * COLORS.length + 1).color).toBe(COLORS[0]);
   });
   it('clamps invalid levels to level 1', () => {
     expect(levelConfig(0)).toEqual(levelConfig(1));

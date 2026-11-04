@@ -3,8 +3,15 @@ import { SHAPES } from '../src/shapes.js';
 import { build } from '../src/web.js';
 
 describe('shapes', () => {
-  it('has at least 8 shapes', () => {
-    expect(SHAPES.length).toBeGreaterThanOrEqual(8);
+  it('has 16 shapes mixing closed and open webs', () => {
+    expect(SHAPES.length).toBe(16);
+    expect(SHAPES.some((s) => s.closed)).toBe(true);
+    expect(SHAPES.some((s) => !s.closed)).toBe(true);
+  });
+
+  it('targets 16 lanes for most shapes', () => {
+    const sixteen = SHAPES.filter((s) => build(s).lanes === 16).length;
+    expect(sixteen).toBeGreaterThanOrEqual(14);
   });
 
   SHAPES.forEach((shape, i) => {
