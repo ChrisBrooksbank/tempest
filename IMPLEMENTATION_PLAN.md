@@ -51,7 +51,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 - [x] 26. Fuseball: new type in `enemies.js`; hops between lane edges while climbing, rides the rim, only shootable while on a lane; score 250/500/750 by depth. Add to table unlocks. Tests for movement + scoring bands.
 - [x] 27. Tanker cargo (flipper/fuseball/pulsar by table) and split-at-top behaviour in `onKill`/`update`. Distinct tint per cargo. Tests.
 - [x] 28. Level-end warp dive: new `warp` phase after clear; claw descends the web, player steers lane to lane, any spike on its lane kills it (lose a life, replay the level clear); spikes no longer lethal during `run`. Dive bonus. Update `phases.js` + tests.
-- [ ] 29. Superzapper second use: first press clears all, second kills one random enemy, then spent. Update `superzapper.js`, HUD indicator, tests. Raise max bullets to 8.
+- [x] 29. Superzapper second use: first press clears all, second kills one random enemy, then spent. Update `superzapper.js`, HUD indicator, tests. Raise max bullets to 8.
 - [ ] 30. Web set: grow `SHAPES` to 16 (mix closed/open, target 16 lanes), fix colour-per-lap in `levelConfig`. Extend shape validity tests; visually check at 3 viewport sizes.
 - [ ] 31. Skill select: title-screen start-level chooser (e.g. 1,3,5,7,9...) via keys/pointer, start bonus score, `begin(level)`. Pure `startOptions(highestReached)` + `startBonus(level)` with tests.
 - [ ] 32. Polish: pause (P/Esc, auto-pause on blur), GAME OVER text, attract-mode demo on title (AI plays), smoother control feel (accelerating key-repeat, pointer glide), optional Gamepad API axis/button mapping. Keep keyboard + pointer working.

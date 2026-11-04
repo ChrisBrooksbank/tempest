@@ -4,7 +4,7 @@ import { levelConfig } from './levels.js';
 import { spawnPlan, pickType } from './difficulty.js';
 import { fireShots, stepShots, shotHitsClaw, bulletHitsShot } from './shots.js';
 import { bulletHits, clawHit } from './collision.js';
-import { canZap, superzap } from './superzapper.js';
+import { canZap, superzap, ZAPS_PER_LEVEL } from './superzapper.js';
 import { phaseView, nextPhase, canStart } from './phases.js';
 import { extraLivesEarned } from './scoring.js';
 import { stepWarp, warpHit, warpDone, diveBonus } from './warp.js';
@@ -80,11 +80,12 @@ let state = 'title',
   score = 0,
   lives = 3,
   overT = 0,
-  zaps = 1,
+  zaps = ZAPS_PER_LEVEL,
   warpZ = 1,
   warpDied = false,
   flash = 0,
   shakeT = Infinity;
+const MAX_BULLETS = 8;
 let entry = createEntry(),
   scores = loadScores(),
   spikes = [],
@@ -125,7 +126,7 @@ function startLevel(n) {
   spikes = newSpikes(web);
   spawnLeft = spawnPlan(n).count;
   spawnT = 1;
-  zaps = 1;
+  zaps = ZAPS_PER_LEVEL;
   flash = 0;
   player.lane = player.target = player.pu = startLane(web);
   phase = 'in';
@@ -295,15 +296,16 @@ function spawn() {
 }
 function zap() {
   if (state !== 'play' || phase !== 'run' || !canZap(zaps, ents)) return;
+  const r = superzap(ents, level, zaps);
   zaps--;
   flash = flashPeak(reducedMotion.matches);
   play('zap');
-  for (const e of ents) {
+  for (const e of r.victims) {
     const [x, y] = Q(visualLane(e) + 0.5, e.z);
     burst(x, y, FOE, 'zap');
   }
-  setScore(score + superzap(ents, level).points);
-  ents = [];
+  setScore(score + r.points);
+  ents = r.survivors;
 }
 function kill(z = 1) {
   warpDied = phase === 'warp';
@@ -405,7 +407,7 @@ function update(dt) {
 
   // fire
   cooldown -= dt;
-  if (held.fire && cooldown <= 0 && bullets.length < 6) {
+  if (held.fire && cooldown <= 0 && bullets.length < MAX_BULLETS) {
     bullets.push({ lane: player.lane, z: 0.97 });
     cooldown = 0.11;
     play('fire');
@@ -675,7 +677,7 @@ function draw() {
     text(String(score), 20, 28, 22, color);
     text(`HI ${bestScore(scores, score)}`, 20, 54, 13, FOE);
     text(`LEVEL ${level}`, cx, 54, 13, color);
-    if (zaps > 0) text('ZAP', cx, 28, 16, CLAW);
+    if (zaps > 0) text(zaps > 1 ? 'ZAP ZAP' : 'ZAP', cx, 28, 16, CLAW);
     glow(CLAW, 1.6);
     for (let i = 0; i < lives; i++) {
       const x = W - 28 - i * 28;
