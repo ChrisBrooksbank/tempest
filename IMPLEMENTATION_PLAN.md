@@ -2,9 +2,9 @@
 
 ## Status
 
-- Planning iterations: 3 (re-verified: no code changes since iteration 1; repo still has only index.html, no package.json/src/tests; plan unchanged)
-- Build iterations: 9
-- Last updated: 2026-11-03
+- Planning iterations: 4 (added Phase 6 for specs/arcade-fidelity.md; verified against src/: no shots, fuseball, warp, 2nd zap, skill select exist; bullets cap is 6 in main.js; scoring.js still has per-level scaling + flat bonus)
+- Build iterations: 23 (Phases 0-5 done)
+- Last updated: 2026-11-04
 
 ## Tasks
 
@@ -44,6 +44,18 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 ### Phase 5 - Verification
 - [x] 22. Playwright smoke test (optional, per cb-visual-qa): each shape renders at 3 viewports, no console errors, canvas non-blank. Only if it doesn't bloat deps. (spec: webs-levels.md) **Skipped (optional): Playwright + browser download would bloat deps; existing Vitest tests (shapes.test.js, smoke.test.js) cover shape validity.**
 - [x] 23. Final pass: README controls/roadmap update, confirm all spec checkboxes and acceptance criteria, `npm run check` green.
+
+### Phase 6 - Arcade fidelity (spec: specs/arcade-fidelity.md)
+- [ ] 24. `src/leveltable.js`: single data table per level `{count, speed, interval, maxAlive, unlocks, tankerCargo, enemyFire}` replacing `spawnPlan` formulas (keep `spawnPlan` as the API). Levels 1-2 flipper-only, no fire. Remove per-level point scaling and flat level bonus from `scoring.js` (keep values in a table). Tests: lookup, monotonic caps, L1/L2 invariants, loops past table end.
+- [ ] 25. Enemy shots: pure `src/shots.js` (`fireChance`, `stepShots`, `shotHitsClaw`) - flippers/tankers fire down their lane at a table-driven rate; bullets travel z 0->1, kill the claw on the rim, and the player can shoot them. Draw + SFX. Tests with injected rng.
+- [ ] 26. Fuseball: new type in `enemies.js`; hops between lane edges while climbing, rides the rim, only shootable while on a lane; score 250/500/750 by depth. Add to table unlocks. Tests for movement + scoring bands.
+- [ ] 27. Tanker cargo (flipper/fuseball/pulsar by table) and split-at-top behaviour in `onKill`/`update`. Distinct tint per cargo. Tests.
+- [ ] 28. Level-end warp dive: new `warp` phase after clear; claw descends the web, player steers lane to lane, any spike on its lane kills it (lose a life, replay the level clear); spikes no longer lethal during `run`. Dive bonus. Update `phases.js` + tests.
+- [ ] 29. Superzapper second use: first press clears all, second kills one random enemy, then spent. Update `superzapper.js`, HUD indicator, tests. Raise max bullets to 8.
+- [ ] 30. Web set: grow `SHAPES` to 16 (mix closed/open, target 16 lanes), fix colour-per-lap in `levelConfig`. Extend shape validity tests; visually check at 3 viewport sizes.
+- [ ] 31. Skill select: title-screen start-level chooser (e.g. 1,3,5,7,9...) via keys/pointer, start bonus score, `begin(level)`. Pure `startOptions(highestReached)` + `startBonus(level)` with tests.
+- [ ] 32. Polish: pause (P/Esc, auto-pause on blur), GAME OVER text, attract-mode demo on title (AI plays), smoother control feel (accelerating key-repeat, pointer glide), optional Gamepad API axis/button mapping. Keep keyboard + pointer working.
+- [ ] 33. Final pass: README roadmap, tick specs/arcade-fidelity.md boxes, `npm run check` green.
 
 ## Completed
 
