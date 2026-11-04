@@ -3,7 +3,7 @@
 ## Status
 
 - Planning iterations: 4 (added Phase 6 for specs/arcade-fidelity.md; verified against src/: no shots, fuseball, warp, 2nd zap, skill select exist; bullets cap is 6 in main.js; scoring.js still has per-level scaling + flat bonus)
-- Build iterations: 24 (Phases 0-5 done; Phase 6 in progress)
+- Build iterations: 25 (Phases 0-5 done; Phase 6 in progress)
 - Last updated: 2026-11-04
 
 ## Tasks
@@ -48,7 +48,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 ### Phase 6 - Arcade fidelity (spec: specs/arcade-fidelity.md)
 - [x] 24. `src/leveltable.js`: single data table per level `{count, speed, interval, maxAlive, unlocks, tankerCargo, enemyFire}` replacing `spawnPlan` formulas (keep `spawnPlan` as the API). Levels 1-2 flipper-only, no fire. Remove per-level point scaling and flat level bonus from `scoring.js` (keep values in a table). Tests: lookup, monotonic caps, L1/L2 invariants, loops past table end.
 - [x] 25. Enemy shots: pure `src/shots.js` (`fireChance`, `stepShots`, `shotHitsClaw`) - flippers/tankers fire down their lane at a table-driven rate; bullets travel z 0->1, kill the claw on the rim, and the player can shoot them. Draw + SFX. Tests with injected rng.
-- [ ] 26. Fuseball: new type in `enemies.js`; hops between lane edges while climbing, rides the rim, only shootable while on a lane; score 250/500/750 by depth. Add to table unlocks. Tests for movement + scoring bands.
+- [x] 26. Fuseball: new type in `enemies.js`; hops between lane edges while climbing, rides the rim, only shootable while on a lane; score 250/500/750 by depth. Add to table unlocks. Tests for movement + scoring bands.
 - [ ] 27. Tanker cargo (flipper/fuseball/pulsar by table) and split-at-top behaviour in `onKill`/`update`. Distinct tint per cargo. Tests.
 - [ ] 28. Level-end warp dive: new `warp` phase after clear; claw descends the web, player steers lane to lane, any spike on its lane kills it (lose a life, replay the level clear); spikes no longer lethal during `run`. Dive bonus. Update `phases.js` + tests.
 - [ ] 29. Superzapper second use: first press clears all, second kills one random enemy, then spent. Update `superzapper.js`, HUD indicator, tests. Raise max bullets to 8.

@@ -9,7 +9,7 @@ describe('spawnPlan', () => {
     expect(p.interval).toBeCloseTo(1.32);
     expect(p.maxAlive).toBe(5);
     expect(p.speed).toBeCloseTo(0.175);
-    expect(p.mix).toEqual({ flipper: 1, tanker: 0, spiker: 0, pulsar: 0 });
+    expect(p.mix).toEqual({ flipper: 1, tanker: 0, spiker: 0, pulsar: 0, fuseball: 0 });
     expect(p.enemyFire).toBe(0);
   });
   it('scales monotonically', () => {

@@ -7,6 +7,7 @@ const F = ['flipper'];
 const FT = ['flipper', 'tanker'];
 const FTS = ['flipper', 'tanker', 'spiker'];
 const ALL = ['flipper', 'tanker', 'spiker', 'pulsar'];
+const ALLF = [...ALL, 'fuseball'];
 
 export const LEVEL_TABLE = [
   {
@@ -86,7 +87,7 @@ export const LEVEL_TABLE = [
     speed: 0.295,
     interval: 0.68,
     maxAlive: 13,
-    unlocks: ALL,
+    unlocks: ALLF,
     tankerCargo: 'flipper',
     enemyFire: 0.17,
   },
@@ -95,7 +96,7 @@ export const LEVEL_TABLE = [
     speed: 0.31,
     interval: 0.6,
     maxAlive: 14,
-    unlocks: ALL,
+    unlocks: ALLF,
     tankerCargo: 'flipper',
     enemyFire: 0.19,
   },
@@ -104,7 +105,7 @@ export const LEVEL_TABLE = [
     speed: 0.325,
     interval: 0.52,
     maxAlive: 15,
-    unlocks: ALL,
+    unlocks: ALLF,
     tankerCargo: 'flipper',
     enemyFire: 0.21,
   },
@@ -113,7 +114,7 @@ export const LEVEL_TABLE = [
     speed: 0.34,
     interval: 0.5,
     maxAlive: 16,
-    unlocks: ALL,
+    unlocks: ALLF,
     tankerCargo: 'flipper',
     enemyFire: 0.23,
   },
@@ -122,7 +123,7 @@ export const LEVEL_TABLE = [
     speed: 0.355,
     interval: 0.5,
     maxAlive: 17,
-    unlocks: ALL,
+    unlocks: ALLF,
     tankerCargo: 'flipper',
     enemyFire: 0.25,
   },
@@ -131,7 +132,7 @@ export const LEVEL_TABLE = [
     speed: 0.37,
     interval: 0.5,
     maxAlive: 18,
-    unlocks: ALL,
+    unlocks: ALLF,
     tankerCargo: 'flipper',
     enemyFire: 0.27,
   },
@@ -140,7 +141,7 @@ export const LEVEL_TABLE = [
     speed: 0.385,
     interval: 0.5,
     maxAlive: 19,
-    unlocks: ALL,
+    unlocks: ALLF,
     tankerCargo: 'flipper',
     enemyFire: 0.29,
   },
@@ -149,7 +150,7 @@ export const LEVEL_TABLE = [
     speed: 0.4,
     interval: 0.5,
     maxAlive: 20,
-    unlocks: ALL,
+    unlocks: ALLF,
     tankerCargo: 'flipper',
     enemyFire: 0.3,
   },

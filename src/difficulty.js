@@ -10,7 +10,7 @@ function mixFor(n, unlocks) {
     weights[type] = w;
     total += w;
   }
-  const mix = { flipper: 0, tanker: 0, spiker: 0, pulsar: 0 };
+  const mix = { flipper: 0, tanker: 0, spiker: 0, pulsar: 0, fuseball: 0 };
   for (const type of unlocks) mix[type] = weights[type] / total;
   return mix;
 }

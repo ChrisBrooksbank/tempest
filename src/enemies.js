@@ -256,7 +256,64 @@ const pulsar = {
   score: (level) => pointsFor('pulsar', level),
 };
 
-export const ENEMY_TYPES = { flipper, tanker, spiker, pulsar };
+// Fuseball: hops between lane edges (unshootable) and lane centres (shootable) while
+// climbing, then rides the rim toward the player. Worth more the closer to the rim.
+export const fuseballPoints = (z) => (z < 1 / 3 ? 250 : z < 2 / 3 ? 500 : 750);
+
+const fuseball = {
+  create({ web, plan, rng = Math.random }) {
+    return {
+      type: 'fuseball',
+      lane: Math.floor(rng() * web.lanes),
+      z: 0,
+      v: plan.speed * 0.85 * (0.8 + rng() * 0.4),
+      onLane: true,
+      ht: 0.4 + rng() * 0.4,
+      flip: null,
+    };
+  },
+  update(e, dt, { web, playerLane, rng = Math.random }) {
+    if (e.z < 1) e.z = Math.min(1, e.z + e.v * dt);
+    e.ht -= dt;
+    if (e.ht > 0) return;
+    const rim = e.z >= 1;
+    e.ht = rim ? 0.22 : 0.35 + rng() * 0.45;
+    if (e.onLane) {
+      e.onLane = false; // slip onto the edge at the lane's start
+    } else {
+      e.onLane = true;
+      const d = rim ? dirTo(web, e.lane, playerLane) : rng() < 0.5 ? -1 : 1;
+      if (d < 0) e.lane = step(web, e.lane, -1);
+    }
+  },
+  draw(e, { g, Q, glow }) {
+    const u = e.onLane ? e.lane + 0.5 : e.lane;
+    const c = Q(u, e.z),
+      a = Q(u, Math.min(1, e.z + 0.05)),
+      b = Q(u, Math.max(0, e.z - 0.05)),
+      l = Q(u - 0.4, e.z),
+      r = Q(u + 0.4, e.z);
+    glow(e.onLane ? '#ff5030' : '#ffd040', 4);
+    g.beginPath();
+    g.moveTo(a[0], a[1]);
+    g.lineTo(b[0], b[1]);
+    g.moveTo(l[0], l[1]);
+    g.lineTo(r[0], r[1]);
+    g.moveTo(l[0], a[1]);
+    g.lineTo(r[0], b[1]);
+    g.moveTo(r[0], a[1]);
+    g.lineTo(l[0], b[1]);
+    g.moveTo(c[0] + 3, c[1]);
+    g.arc(c[0], c[1], 3, 0, Math.PI * 2);
+    g.stroke();
+  },
+  onKill() {
+    return [];
+  },
+  score: (level, e) => (e ? fuseballPoints(e.z) : pointsFor('fuseball', level)),
+};
+
+export const ENEMY_TYPES = { flipper, tanker, spiker, pulsar, fuseball };
 
 export function enemyType(e) {
   return ENEMY_TYPES[e.type || 'flipper'];

@@ -441,7 +441,7 @@ function update(dt) {
     burst(x, y, FOE, 'kill');
     const kind = enemyType(hit);
     play(killPreset(hit.type));
-    setScore(score + kind.score(level));
+    setScore(score + kind.score(level, hit));
     ents.splice(ents.indexOf(hit), 1);
     ents.push(...kind.onKill(hit, { web }));
     bullets.splice(bi, 1);

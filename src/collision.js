@@ -7,6 +7,7 @@ export function effectiveLane(web, enemy) {
 }
 
 export function bulletHits(web, enemy, bullet) {
+  if (enemy.onLane === false) return false; // fuseball riding a lane edge can't be shot
   return effectiveLane(web, enemy) === bullet.lane && Math.abs(enemy.z - bullet.z) < 0.07;
 }
 

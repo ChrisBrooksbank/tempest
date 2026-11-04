@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { build } from '../src/web.js';
 import { SHAPES } from '../src/shapes.js';
+import { bulletHits } from '../src/collision.js';
+import { spawnPlan } from '../src/difficulty.js';
 import {
   newSpikes,
   growSpike,
@@ -16,6 +18,7 @@ import {
   enemyType,
   visualLane,
   splitLanes,
+  fuseballPoints,
 } from '../src/enemies.js';
 
 const web = build(SHAPES[0]);
@@ -146,5 +149,47 @@ describe('pulsar', () => {
     for (let i = 0; i < 100; i++) ENEMY_TYPES.pulsar.update(e, 0.1, { web, playerLane: 0 });
     expect(e.pt).toBeLessThan(PULSE_PERIOD);
     expect(isPulsing({ type: 'flipper', pt: 99 })).toBe(false);
+  });
+});
+
+describe('fuseball', () => {
+  const upd = (e, dt, ctx = {}) =>
+    ENEMY_TYPES.fuseball.update(e, dt, { web, playerLane: 0, ...ctx });
+  it('is created on a lane at depth 0 and shootable', () => {
+    const e = createEnemy('fuseball', { web, plan, rng: () => 0.5 });
+    expect(e.type).toBe('fuseball');
+    expect(e.z).toBe(0);
+    expect(e.onLane).toBe(true);
+    expect(bulletHits(web, e, { lane: e.lane, z: 0 })).toBe(true);
+  });
+  it('alternates between lane and edge while climbing, and is unshootable on an edge', () => {
+    const e = createEnemy('fuseball', { web, plan, rng: () => 0.5 });
+    e.ht = 0;
+    upd(e, 0.01, { rng: () => 0.5 });
+    expect(e.onLane).toBe(false);
+    expect(bulletHits(web, e, { lane: e.lane, z: e.z })).toBe(false);
+    e.ht = 0;
+    upd(e, 0.01, { rng: () => 0.9 });
+    expect(e.onLane).toBe(true);
+  });
+  it('moves toward the player along the rim', () => {
+    const e = createEnemy('fuseball', { web, plan, rng: () => 0.5 });
+    e.z = 1;
+    e.lane = 5;
+    e.onLane = false;
+    e.ht = 0;
+    upd(e, 0.01, { playerLane: 2 });
+    expect(e.onLane).toBe(true);
+    expect(e.lane).toBe(4);
+  });
+  it('scores 250/500/750 by depth', () => {
+    expect(fuseballPoints(0.1)).toBe(250);
+    expect(fuseballPoints(0.5)).toBe(500);
+    expect(fuseballPoints(0.9)).toBe(750);
+    expect(ENEMY_TYPES.fuseball.score(1, { z: 1 })).toBe(750);
+  });
+  it('unlocks at level 9 in the mix', () => {
+    expect(spawnPlan(8).mix.fuseball).toBe(0);
+    expect(spawnPlan(9).mix.fuseball).toBeGreaterThan(0);
   });
 });
