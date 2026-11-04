@@ -33,21 +33,21 @@ high-score table with initials; vector/neon look with phosphor trail; per-event 
 
 ## Requirements
 
-- [ ] Enemy projectiles exist, are pure/testable, kill the claw, and scale in by level
-- [ ] Fuseball enemy implemented with rim/lane movement and depth-based scoring
-- [ ] Tanker cargo varies by level; tankers also split on reaching the top
-- [ ] Level end is an interactive warp dive where spikes are the hazard (not lethal during play)
-- [ ] Superzapper second use kills a single enemy
-- [ ] 16 webs, normalised to 16 lanes where the shape allows, with a fixed colour per lap
-- [ ] Skill-select start level with start bonus
-- [ ] One data table drives per-level enemy counts/speeds/unlocks and scoring values
+- [x] Enemy projectiles exist, are pure/testable, kill the claw, and scale in by level
+- [x] Fuseball enemy implemented with rim/lane movement and depth-based scoring
+- [x] Tanker cargo varies by level; tankers also split on reaching the top
+- [x] Level end is an interactive warp dive where spikes are the hazard (not lethal during play)
+- [x] Superzapper second use kills a single enemy
+- [x] 16 webs, normalised to 16 lanes where the shape allows, with a fixed colour per lap
+- [x] Skill-select start level with start bonus
+- [x] One data table drives per-level enemy counts/speeds/unlocks and scoring values
 
 ## Acceptance Criteria
 
-- [ ] Unit tests cover enemy shots, fuseball movement/scoring, tanker cargo, warp collision, zapper uses, level table lookups, start-level bonus
-- [ ] `npm run check` passes
-- [ ] Level 1-2 remain beatable by a new player (flipper-only, no enemy fire)
-- [ ] Neon vector aesthetic and keyboard + pointer input are unchanged
+- [x] Unit tests cover enemy shots, fuseball movement/scoring, tanker cargo, warp collision, zapper uses, level table lookups, start-level bonus
+- [x] `npm run check` passes
+- [x] Level 1-2 remain beatable by a new player (flipper-only, no enemy fire)
+- [x] Neon vector aesthetic and keyboard + pointer input are unchanged
 
 ## Out of Scope
 

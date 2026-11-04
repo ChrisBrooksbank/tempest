@@ -3,7 +3,7 @@
 ## Status
 
 - Planning iterations: 4 (added Phase 6 for specs/arcade-fidelity.md; verified against src/: no shots, fuseball, warp, 2nd zap, skill select exist; bullets cap is 6 in main.js; scoring.js still has per-level scaling + flat bonus)
-- Build iterations: 28 (Phases 0-5 done; Phase 6 in progress, task 32 done)
+- Build iterations: 29 (Phases 0-6 done)
 - Last updated: 2026-11-04
 
 ## Tasks
@@ -55,7 +55,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 - [x] 30. Web set: grow `SHAPES` to 16 (mix closed/open, target 16 lanes), fix colour-per-lap in `levelConfig`. Extend shape validity tests; visually check at 3 viewport sizes.
 - [x] 31. Skill select: title-screen start-level chooser (e.g. 1,3,5,7,9...) via keys/pointer, start bonus score, `begin(level)`. Pure `startOptions(highestReached)` + `startBonus(level)` with tests.
 - [x] 32. Polish: pause (P/Esc, auto-pause on blur), GAME OVER text, attract-mode demo on title (AI plays), smoother control feel (accelerating key-repeat, pointer glide), optional Gamepad API axis/button mapping. Keep keyboard + pointer working.
-- [ ] 33. Final pass: README roadmap, tick specs/arcade-fidelity.md boxes, `npm run check` green.
+- [x] 33. Final pass: README roadmap, tick specs/arcade-fidelity.md boxes, `npm run check` green.
 
 ## Completed
 

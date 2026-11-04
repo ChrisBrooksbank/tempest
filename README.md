@@ -78,6 +78,7 @@ The next wave of work is laid out in [`specs/`](specs/) and tracked in [`IMPLEME
 - [x] More enemy types and nastier behaviour
 - [x] Scoring and persistent high scores
 - [x] Richer audio and effects
+- [x] Arcade fidelity: enemy shots, fuseballs, tanker cargo, warp dive, 2-use superzapper, 16 webs, skill select, pause/attract/gamepad
 
 Run `npm run check` (lint + format check + tests) before committing.
 
