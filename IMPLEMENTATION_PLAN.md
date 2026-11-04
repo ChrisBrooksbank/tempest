@@ -3,7 +3,7 @@
 ## Status
 
 - Planning iterations: 4 (added Phase 6 for specs/arcade-fidelity.md; verified against src/: no shots, fuseball, warp, 2nd zap, skill select exist; bullets cap is 6 in main.js; scoring.js still has per-level scaling + flat bonus)
-- Build iterations: 26 (Phases 0-5 done; Phase 6 in progress)
+- Build iterations: 27 (Phases 0-5 done; Phase 6 in progress, task 31 done)
 - Last updated: 2026-11-04
 
 ## Tasks
@@ -53,7 +53,7 @@ Priority order; one task = one build iteration. Run `npm run check` before finis
 - [x] 28. Level-end warp dive: new `warp` phase after clear; claw descends the web, player steers lane to lane, any spike on its lane kills it (lose a life, replay the level clear); spikes no longer lethal during `run`. Dive bonus. Update `phases.js` + tests.
 - [x] 29. Superzapper second use: first press clears all, second kills one random enemy, then spent. Update `superzapper.js`, HUD indicator, tests. Raise max bullets to 8.
 - [x] 30. Web set: grow `SHAPES` to 16 (mix closed/open, target 16 lanes), fix colour-per-lap in `levelConfig`. Extend shape validity tests; visually check at 3 viewport sizes.
-- [ ] 31. Skill select: title-screen start-level chooser (e.g. 1,3,5,7,9...) via keys/pointer, start bonus score, `begin(level)`. Pure `startOptions(highestReached)` + `startBonus(level)` with tests.
+- [x] 31. Skill select: title-screen start-level chooser (e.g. 1,3,5,7,9...) via keys/pointer, start bonus score, `begin(level)`. Pure `startOptions(highestReached)` + `startBonus(level)` with tests.
 - [ ] 32. Polish: pause (P/Esc, auto-pause on blur), GAME OVER text, attract-mode demo on title (AI plays), smoother control feel (accelerating key-repeat, pointer glide), optional Gamepad API axis/button mapping. Keep keyboard + pointer working.
 - [ ] 33. Final pass: README roadmap, tick specs/arcade-fidelity.md boxes, `npm run check` green.
 

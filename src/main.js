@@ -7,6 +7,7 @@ import { bulletHits, clawHit } from './collision.js';
 import { canZap, superzap, ZAPS_PER_LEVEL } from './superzapper.js';
 import { phaseView, nextPhase, canStart } from './phases.js';
 import { extraLivesEarned } from './scoring.js';
+import { startOptions, startBonus, cycleStart, loadHighest, saveHighest } from './skill.js';
 import { stepWarp, warpHit, warpDone, diveBonus } from './warp.js';
 import { load as loadScores, save as saveScores, qualifies, insertScore } from './highscores.js';
 import {
@@ -86,7 +87,9 @@ let state = 'title',
   flash = 0,
   shakeT = Infinity;
 const MAX_BULLETS = 8;
-let entry = createEntry(),
+let highest = loadHighest(),
+  startSel = 1,
+  entry = createEntry(),
   scores = loadScores(),
   spikes = [],
   ents = [],
@@ -118,6 +121,7 @@ function setScore(v) {
 function startLevel(n) {
   const cfg = levelConfig(n);
   level = n;
+  if (state === 'play') highest = saveHighest(n);
   web = build(SHAPES[cfg.shapeIndex]);
   color = cfg.color;
   ents = [];
@@ -135,11 +139,16 @@ function startLevel(n) {
   phaseT = 0;
 }
 function begin() {
+  const n = startOptions(highest).includes(startSel) ? startSel : 1;
   setScore(0);
   lives = 3;
   sparks = [];
   setState('play');
-  startLevel(1);
+  setScore(startBonus(n));
+  startLevel(n);
+}
+function selectStart(d) {
+  startSel = cycleStart(startOptions(highest), startSel, d);
 }
 
 // ── Audio ───────────────────────────────────────────────────────────────────
@@ -223,6 +232,10 @@ addEventListener('keydown', (e) => {
     }
     return;
   }
+  if (state === 'title' && (k === 'l' || k === 'r')) {
+    if (!e.repeat) selectStart(k === 'l' ? -1 : 1);
+    return;
+  }
   held[k] = true;
   press(e.repeat);
 });
@@ -257,6 +270,13 @@ cv.addEventListener('pointerdown', (e) => {
     wake();
     audio.toggle();
     return;
+  }
+  if (state === 'title' && startOptions(highest).length > 1) {
+    const u = Math.min(W, H);
+    if (Math.abs(e.clientY - (cy + u * 0.33)) < u * 0.06 && Math.abs(e.clientX - cx) > u * 0.1) {
+      selectStart(e.clientX < cx ? -1 : 1);
+      return;
+    }
   }
   cv.setPointerCapture(e.pointerId);
   held.fire = true;
@@ -659,6 +679,11 @@ function draw() {
     const rows = tableLines(scores);
     if (!rows.length) text('NO SCORES YET', cx, cy + u * 0.01, sz, color);
     rows.forEach((r, i) => text(r, cx, cy + u * 0.01 + i * sz * 1.3, sz, color));
+    if (startOptions(highest).length > 1) {
+      const sel = startOptions(highest).includes(startSel) ? startSel : 1;
+      text(`◀  START LEVEL ${sel}  ▶`, cx, cy + u * 0.33, sz, CLAW);
+      if (sel > 1) text(`BONUS ${startBonus(sel)}`, cx, cy + u * 0.33 + sz * 1.4, sz * 0.8, color);
+    }
   } else if (state === 'entry') {
     const { u: eu, gap, y, okY } = entryLayout();
     const big = eu * 0.1;
