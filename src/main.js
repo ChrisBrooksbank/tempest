@@ -22,6 +22,15 @@ import {
 } from './initials.js';
 import { burstSpec, capParticles, shakeAmplitude, flashPeak } from './effects.js';
 import { bestScore, tableLines } from './hud.js';
+import {
+  repeatInterval,
+  glideInterval,
+  togglePause,
+  autoPause,
+  attractMove,
+  padState,
+  risen,
+} from './control.js';
 import { createAudio, killPreset, muteButtonRect, hitMuteButton } from './audio.js';
 import {
   ENEMY_TYPES,
@@ -85,6 +94,11 @@ let state = 'title',
   warpZ = 1,
   warpDied = false,
   flash = 0,
+  paused = false,
+  demo = true,
+  demoFire = false,
+  holdT = 0,
+  padPrev = padState(null),
   shakeT = Infinity;
 const MAX_BULLETS = 8;
 let highest = loadHighest(),
@@ -103,12 +117,14 @@ let highest = loadHighest(),
   stepT = 0;
 const player = { lane: 0, target: 0, pu: 0 };
 const held = { l: false, r: false, fire: false };
+let pad = padState(null);
 
 function setState(s) {
   state = s;
   cv.dataset.state = s;
 }
 function setScore(v) {
+  if (demo) return;
   const gained = extraLivesEarned(score, v);
   if (gained > 0) {
     lives += gained;
@@ -140,6 +156,8 @@ function startLevel(n) {
 }
 function begin() {
   const n = startOptions(highest).includes(startSel) ? startSel : 1;
+  demo = false;
+  paused = false;
   setScore(0);
   lives = 3;
   sparks = [];
@@ -153,7 +171,8 @@ function selectStart(d) {
 
 // ── Audio ───────────────────────────────────────────────────────────────────
 const audio = createAudio();
-const { wake, play } = audio;
+const { wake } = audio;
+const play = (...a) => demo || audio.play(...a); // attract mode is silent
 
 // ── Input ───────────────────────────────────────────────────────────────────
 const KEYS = {
@@ -205,6 +224,10 @@ function entryPointer(e) {
   entry = setCursor(entry, slot);
   entry = cycleLetter(entry, dy < 0 ? 1 : -1);
 }
+function setPaused(p) {
+  paused = p;
+  held.l = held.r = held.fire = false;
+}
 function press(repeat = false) {
   wake();
   if (canStart(state, overT, repeat)) begin();
@@ -212,6 +235,11 @@ function press(repeat = false) {
 addEventListener('keydown', (e) => {
   if (state === 'entry') {
     if (!e.ctrlKey && !e.metaKey && !e.altKey && entryKey(e)) e.preventDefault();
+    return;
+  }
+  if ((e.code === 'KeyP' || e.code === 'Escape') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+    if (!e.repeat) setPaused(togglePause(paused, state));
     return;
   }
   if (e.code === 'KeyM' && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -226,7 +254,7 @@ addEventListener('keydown', (e) => {
   if (!k || e.ctrlKey || e.metaKey || e.altKey) return;
   e.preventDefault();
   if (k === 'zap') {
-    if (!e.repeat) {
+    if (!e.repeat && !paused) {
       wake();
       zap();
     }
@@ -236,6 +264,7 @@ addEventListener('keydown', (e) => {
     if (!e.repeat) selectStart(k === 'l' ? -1 : 1);
     return;
   }
+  if (paused) return;
   held[k] = true;
   press(e.repeat);
 });
@@ -245,6 +274,7 @@ addEventListener('keyup', (e) => {
 });
 addEventListener('blur', () => {
   held.l = held.r = held.fire = false;
+  paused = autoPause(paused, state);
 });
 
 function aim(e) {
@@ -278,6 +308,10 @@ cv.addEventListener('pointerdown', (e) => {
       return;
     }
   }
+  if (paused) {
+    setPaused(false);
+    return;
+  }
   cv.setPointerCapture(e.pointerId);
   held.fire = true;
   aim(e);
@@ -295,6 +329,7 @@ cv.addEventListener('lostpointercapture', () => {
 });
 document.addEventListener('visibilitychange', () => {
   held.l = held.r = held.fire = false;
+  if (document.hidden) paused = autoPause(paused, state);
 });
 
 // ── Simulation ──────────────────────────────────────────────────────────────
@@ -333,12 +368,26 @@ function kill(z = 1) {
   burst(x, y, CLAW, 'death');
   shakeT = 0;
   play('death');
-  lives--;
+  if (!demo) lives--;
   phase = 'dead';
   phaseT = 0;
 }
 
+function pollPad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  pad = padState([...pads].find((p) => p && p.connected));
+  if (risen(padPrev.pause, pad.pause)) setPaused(togglePause(paused, state));
+  if (!paused && risen(padPrev.zap, pad.zap)) {
+    wake();
+    zap();
+  }
+  if (!paused && risen(padPrev.fire, pad.fire)) press();
+  padPrev = pad;
+}
+
 function update(dt) {
+  pollPad();
+  if (paused) return;
   phaseT += dt;
   flash = Math.max(0, flash - dt * 3);
   shakeT += dt;
@@ -352,17 +401,28 @@ function update(dt) {
 
   // keyboard walk + pointer target → lane
   if (phase === 'run' || phase === 'in' || phase === 'warp') {
-    if (held.l !== held.r) {
+    if (demo) {
+      const m = attractMove(web, player.lane, ents, spikes, phase === 'warp');
+      player.target = m.target;
+      demoFire = m.fire && phase === 'run';
+    }
+    const left = held.l || pad.l,
+      right = held.r || pad.r;
+    if (left !== right) {
+      holdT += dt;
       moveT -= dt;
       if (moveT <= 0) {
-        player.target = step(web, player.lane, held.r ? 1 : -1);
-        moveT = 0.085;
+        player.target = step(web, player.lane, right ? 1 : -1);
+        moveT = repeatInterval(holdT);
       }
-    } else moveT = 0;
+    } else {
+      moveT = 0;
+      holdT = 0;
+    }
     stepT -= dt;
     if (stepT <= 0 && player.lane !== player.target) {
       player.lane = step(web, player.lane, dirTo(web, player.lane, player.target));
-      stepT = 0.035;
+      stepT = glideInterval(wdiff(web, player.lane, player.target));
     }
     player.pu += wdiff(web, player.pu, player.lane) * Math.min(1, dt * 30);
   }
@@ -423,11 +483,11 @@ function update(dt) {
     }
     return;
   }
-  if (state !== 'play') return;
+  if (state !== 'play' && !demo) return;
 
   // fire
   cooldown -= dt;
-  if (held.fire && cooldown <= 0 && bullets.length < MAX_BULLETS) {
+  if ((held.fire || pad.fire || demoFire) && cooldown <= 0 && bullets.length < MAX_BULLETS) {
     bullets.push({ lane: player.lane, z: 0.97 });
     cooldown = 0.11;
     play('fire');
@@ -697,8 +757,11 @@ function draw() {
       text('▼', x, y + eu * 0.1, big * 0.3, on ? CLAW : color);
     }
     text('OK', cx, okY, Math.max(14, eu * 0.05), FOE);
-  } else if (state === 'over') text(String(score), cx, cy, u * 0.12, color);
-  else {
+  } else if (state === 'over') {
+    text('GAME OVER', cx, cy - u * 0.16, u * 0.08, FOE);
+    text(String(score), cx, cy, u * 0.12, color);
+    if (overT > 0.8) text('PRESS FIRE', cx, cy + u * 0.14, Math.max(12, u * 0.035), CLAW);
+  } else {
     text(String(score), 20, 28, 22, color);
     text(`HI ${bestScore(scores, score)}`, 20, 54, 13, FOE);
     text(`LEVEL ${level}`, cx, 54, 13, color);
@@ -708,6 +771,12 @@ function draw() {
       const x = W - 28 - i * 28;
       claw(x - 9, 30, x + 9, 30, 0, -1, 12);
     }
+  }
+  if (paused) {
+    g.fillStyle = 'rgba(0,0,0,.5)';
+    g.fillRect(0, 0, W, H);
+    text('PAUSED', cx, cy, u * 0.09, CLAW);
+    text('P / ESC / TAP TO RESUME', cx, cy + u * 0.08, Math.max(11, u * 0.03), color);
   }
   if (state !== 'entry') drawMuteButton();
 }
@@ -745,7 +814,7 @@ startLevel(1);
 phase = 'run';
 zoom = alpha = 1;
 setState('title');
-setScore(0);
+cv.dataset.score = '0';
 let last = 0;
 (function frame(ts) {
   const dt = Math.min(0.05, (ts - last) / 1000 || 0);

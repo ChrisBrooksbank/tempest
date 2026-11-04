@@ -37,3 +37,4 @@ npm run check          # lint + format check + tests (create this script in task
 - Input: keyboard (KEYS map) and pointer; don't break either.
 - Audio uses Web Audio `sfx()`, lazily woken on first input (browser autoplay rules).
 - Learnings from iterations go below:
+- Pause/attract/gamepad/input-feel logic lives in pure `src/control.js`; attract demo = `demo` flag in main.js (silent, no score/lives).
