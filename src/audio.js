@@ -54,6 +54,8 @@ export const PRESETS = {
     [800, 800, 0.1, 'square', 0.05, 0.1],
     [1200, 1400, 0.3, 'square', 0.05, 0.2],
   ],
+  enemyFire: [[500, 250, 0.1, 'triangle', 0.025, 0]],
+  shotHit: [[800, 300, 0.08, 'square', 0.03, 0]],
   zap: [[120, 1500, 0.5, 'sawtooth', 0.07, 0]],
 };
 

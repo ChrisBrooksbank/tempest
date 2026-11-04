@@ -2,6 +2,7 @@ import { build, step, wdiff, dirTo, startLane } from './web.js';
 import { SHAPES } from './shapes.js';
 import { levelConfig } from './levels.js';
 import { spawnPlan, pickType } from './difficulty.js';
+import { fireShots, stepShots, shotHitsClaw, bulletHitsShot } from './shots.js';
 import { bulletHits, clawHit } from './collision.js';
 import { canZap, superzap } from './superzapper.js';
 import { phaseView, nextPhase, canStart } from './phases.js';
@@ -87,6 +88,7 @@ let entry = createEntry(),
   spikes = [],
   ents = [],
   bullets = [],
+  shots = [],
   sparks = [],
   spawnLeft = 0,
   spawnT = 0,
@@ -117,6 +119,7 @@ function startLevel(n) {
   color = cfg.color;
   ents = [];
   bullets = [];
+  shots = [];
   spikes = newSpikes(web);
   spawnLeft = spawnPlan(n).count;
   spawnT = 1;
@@ -358,11 +361,13 @@ function update(dt) {
         spawnLeft += ents.length;
         ents = [];
         bullets = [];
+        shots = [];
         spawnT = 1.2;
         phase = 'run';
       } else {
         ents = [];
         bullets = [];
+        shots = [];
         overT = 0;
         scores = loadScores();
         held.l = held.r = held.fire = false;
@@ -401,6 +406,22 @@ function update(dt) {
   for (const e of ents) enemyType(e).update(e, dt, { web, playerLane: player.lane, spikes });
   ents = ents.filter((e) => !e.gone);
 
+  // enemy shots: fire, travel, and get shot down by player bullets
+  const fired = fireShots(ents, spawnPlan(level).enemyFire, dt);
+  if (fired.length) play('enemyFire');
+  shots.push(...fired);
+  const stepped = stepShots(shots, dt);
+  shots = stepped.shots;
+  for (let bi = bullets.length - 1; bi >= 0; bi--) {
+    const si = shots.findIndex((s) => bulletHitsShot(bullets[bi], s));
+    if (si < 0) continue;
+    const [x, y] = Q(shots[si].lane + 0.5, shots[si].z);
+    burst(x, y, FOE, 'spike');
+    play('shotHit');
+    shots.splice(si, 1);
+    bullets.splice(bi, 1);
+  }
+
   // shots vs spikes
   for (let bi = bullets.length - 1; bi >= 0; bi--) {
     const b = bullets[bi];
@@ -429,6 +450,7 @@ function update(dt) {
   // enemies vs claw
   if (
     ents.some((e) => clawHit(e, player.lane) || pulseHit(e, player.lane)) ||
+    stepped.arrived.some((s) => shotHitsClaw(s, player.lane)) ||
     spikeHit(spikes, player.lane)
   ) {
     kill();
@@ -559,6 +581,13 @@ function draw() {
       g.beginPath();
       g.moveTo(p[0], p[1]);
       g.lineTo(q[0], q[1]);
+      g.stroke();
+    }
+    glow(FOE, 2);
+    for (const s of shots) {
+      const p = Q(s.lane + 0.5, s.z);
+      g.beginPath();
+      g.arc(p[0], p[1], 3 + 4 * s.z, 0, Math.PI * 2);
       g.stroke();
     }
     glow('#4dff88', 1.6);
