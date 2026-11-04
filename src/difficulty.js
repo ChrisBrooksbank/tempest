@@ -1,28 +1,31 @@
-// Pure difficulty scaling: level -> spawn parameters and enemy type mix.
-const UNLOCK = { flipper: 1, tanker: 3, spiker: 5, pulsar: 7 };
+// Pure difficulty lookup: level -> spawn parameters and enemy type mix (data in leveltable.js).
+import { levelRow, unlockLevel } from './leveltable.js';
 
-function mixFor(n) {
+function mixFor(n, unlocks) {
   const weights = {};
   let total = 0;
-  for (const [type, from] of Object.entries(UNLOCK)) {
+  for (const type of unlocks) {
     // Newly unlocked types ramp in over 3 levels; flipper stays the baseline.
-    const w = n < from ? 0 : type === 'flipper' ? 1 : Math.min(1, (n - from + 1) / 3) * 0.6;
+    const w = type === 'flipper' ? 1 : Math.min(1, (n - unlockLevel(type) + 1) / 3) * 0.6;
     weights[type] = w;
     total += w;
   }
-  const mix = {};
-  for (const type of Object.keys(weights)) mix[type] = weights[type] / total;
+  const mix = { flipper: 0, tanker: 0, spiker: 0, pulsar: 0 };
+  for (const type of unlocks) mix[type] = weights[type] / total;
   return mix;
 }
 
 export function spawnPlan(level) {
-  const n = Math.max(1, Math.floor(level));
+  const n = Math.max(1, Math.floor(level) || 1);
+  const row = levelRow(n);
   return {
-    count: Math.min(6 + 3 * n, 30),
-    interval: Math.max(0.5, 1.4 - 0.08 * n),
-    maxAlive: 4 + n,
-    speed: Math.min(0.55, 0.16 + 0.015 * n),
-    mix: mixFor(n),
+    count: row.count,
+    interval: row.interval,
+    maxAlive: row.maxAlive,
+    speed: row.speed,
+    tankerCargo: row.tankerCargo,
+    enemyFire: row.enemyFire,
+    mix: mixFor(n, row.unlocks),
   };
 }
 

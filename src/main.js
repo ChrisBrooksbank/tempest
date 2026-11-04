@@ -5,7 +5,7 @@ import { spawnPlan, pickType } from './difficulty.js';
 import { bulletHits, clawHit } from './collision.js';
 import { canZap, superzap } from './superzapper.js';
 import { phaseView, nextPhase, canStart } from './phases.js';
-import { levelBonus, extraLivesEarned } from './scoring.js';
+import { extraLivesEarned } from './scoring.js';
 import { load as loadScores, save as saveScores, qualifies, insertScore } from './highscores.js';
 import {
   createEntry,
@@ -439,7 +439,6 @@ function update(dt) {
   if (spawnLeft === 0 && ents.length === 0) {
     phase = 'out';
     phaseT = 0;
-    setScore(score + levelBonus(level));
     play('levelClear');
   }
 }
