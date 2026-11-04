@@ -1,4 +1,4 @@
-// Pure level-transition helpers (no DOM). Phases: 'in' (zoom in), 'run', 'out' (zoom through), 'dead'.
+// Pure level-transition helpers (no DOM). Phases: 'in' (zoom in), 'run', 'warp' (steered dive after clear), 'out' (zoom through), 'dead'.
 export const IN_TIME = 0.9;
 export const OUT_TIME = 0.9;
 export const DEAD_TIME = 1.2;

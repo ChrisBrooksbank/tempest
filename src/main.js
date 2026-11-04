@@ -7,6 +7,7 @@ import { bulletHits, clawHit } from './collision.js';
 import { canZap, superzap } from './superzapper.js';
 import { phaseView, nextPhase, canStart } from './phases.js';
 import { extraLivesEarned } from './scoring.js';
+import { stepWarp, warpHit, warpDone, diveBonus } from './warp.js';
 import { load as loadScores, save as saveScores, qualifies, insertScore } from './highscores.js';
 import {
   createEntry,
@@ -28,7 +29,6 @@ import {
   visualLane,
   newSpikes,
   shootSpike,
-  spikeHit,
   pulseHit,
 } from './enemies.js';
 
@@ -81,6 +81,8 @@ let state = 'title',
   lives = 3,
   overT = 0,
   zaps = 1,
+  warpZ = 1,
+  warpDied = false,
   flash = 0,
   shakeT = Infinity;
 let entry = createEntry(),
@@ -303,8 +305,9 @@ function zap() {
   setScore(score + superzap(ents, level).points);
   ents = [];
 }
-function kill() {
-  const [x, y] = Q(player.pu + 0.5, 1);
+function kill(z = 1) {
+  warpDied = phase === 'warp';
+  const [x, y] = Q(player.pu + 0.5, z);
   burst(x, y, CLAW, 'death');
   shakeT = 0;
   play('death');
@@ -326,7 +329,7 @@ function update(dt) {
   if (state === 'over') overT += dt;
 
   // keyboard walk + pointer target → lane
-  if (phase === 'run' || phase === 'in') {
+  if (phase === 'run' || phase === 'in' || phase === 'warp') {
     if (held.l !== held.r) {
       moveT -= dt;
       if (moveT <= 0) {
@@ -355,9 +358,27 @@ function update(dt) {
     }
     return;
   }
+  if (phase === 'warp') {
+    warpZ = stepWarp(warpZ, dt);
+    if (warpHit(spikes, player.lane, warpZ)) {
+      kill(warpZ);
+      return;
+    }
+    if (warpDone(warpZ)) {
+      setScore(score + diveBonus(level));
+      phase = 'out';
+      phaseT = 0;
+    }
+    return;
+  }
   if (phase === 'dead') {
     if (phaseView('dead', phaseT).done) {
-      if (lives > 0) {
+      if (lives > 0 && warpDied) {
+        // replay the level clear: dive again from the rim
+        warpDied = false;
+        warpZ = 1;
+        phase = 'warp';
+      } else if (lives > 0) {
         spawnLeft += ents.length;
         ents = [];
         bullets = [];
@@ -456,8 +477,7 @@ function update(dt) {
   // enemies vs claw
   if (
     ents.some((e) => clawHit(e, player.lane) || pulseHit(e, player.lane)) ||
-    stepped.arrived.some((s) => shotHitsClaw(s, player.lane)) ||
-    spikeHit(spikes, player.lane)
+    stepped.arrived.some((s) => shotHitsClaw(s, player.lane))
   ) {
     kill();
     return;
@@ -465,8 +485,11 @@ function update(dt) {
 
   // clear
   if (spawnLeft === 0 && ents.length === 0) {
-    phase = 'out';
+    phase = 'warp';
     phaseT = 0;
+    warpZ = 1;
+    bullets = [];
+    shots = [];
     play('levelClear');
   }
 }
@@ -497,7 +520,7 @@ function drawWeb() {
     if (web.closed) g.closePath();
   }
   g.stroke();
-  if (state !== 'title' && (phase === 'run' || phase === 'in')) {
+  if (state !== 'title' && (phase === 'run' || phase === 'in' || phase === 'warp')) {
     glow(CLAW, 2.4);
     g.beginPath();
     const a = Q(player.pu, 0),
@@ -531,10 +554,10 @@ function claw(ax, ay, bx, by, nx, ny, h) {
   g.stroke();
 }
 
-function drawPlayer() {
-  const a = Q(player.pu, 1),
-    b = Q(player.pu + 1, 1),
-    m = Q(player.pu + 0.5, 1);
+function drawPlayer(z) {
+  const a = Q(player.pu, z),
+    b = Q(player.pu + 1, z),
+    m = Q(player.pu + 0.5, z);
   let nx = m[0] - cx,
     ny = m[1] - cy;
   const l = Math.hypot(nx, ny) || 1;
@@ -578,7 +601,7 @@ function draw() {
   drawWeb();
   g.globalAlpha = 1;
 
-  if (phase === 'run' || phase === 'dead' || phase === 'out') {
+  if (phase === 'run' || phase === 'dead' || phase === 'out' || phase === 'warp') {
     g.globalAlpha = alpha;
     glow('#fff', 2.2);
     for (const b of bullets) {
@@ -607,7 +630,8 @@ function draw() {
     });
     g.stroke();
     for (const e of ents) drawEnemy(e);
-    if (phase === 'run') drawPlayer();
+    if (phase === 'run') drawPlayer(1);
+    else if (phase === 'warp') drawPlayer(warpZ);
     g.globalAlpha = 1;
   }
 

@@ -25,6 +25,9 @@ describe('phaseView', () => {
       expect(Number.isFinite(v.zoom) && Number.isFinite(v.alpha)).toBe(true);
     }
   });
+  it('warp is driven by dive depth, never finishes by time', () => {
+    expect(phaseView('warp', 99)).toMatchObject({ zoom: 1, alpha: 1, done: false });
+  });
   it('dead finishes after DEAD_TIME; run never finishes', () => {
     expect(phaseView('dead', DEAD_TIME - 0.01).done).toBe(false);
     expect(phaseView('dead', DEAD_TIME).done).toBe(true);
