@@ -150,6 +150,7 @@ function startLevel(n) {
   flash = 0;
   player.lane = player.target = player.pu = startLane(web);
   phase = 'in';
+  play('levelStart');
   zoom = 0.25;
   alpha = 0;
   phaseT = 0;
@@ -348,6 +349,7 @@ function spawn() {
   const mix = {};
   for (const t of Object.keys(plan.mix)) if (ENEMY_TYPES[t]) mix[t] = plan.mix[t];
   ents.push(createEnemy(pickType(mix), { web, plan }));
+  play('spawn');
 }
 function zap() {
   if (state !== 'play' || phase !== 'run' || !canZap(zaps, ents)) return;
@@ -422,6 +424,7 @@ function update(dt) {
     stepT -= dt;
     if (stepT <= 0 && player.lane !== player.target) {
       player.lane = step(web, player.lane, dirTo(web, player.lane, player.target));
+      play('move');
       stepT = glideInterval(wdiff(web, player.lane, player.target));
     }
     player.pu += wdiff(web, player.pu, player.lane) * Math.min(1, dt * 30);
@@ -477,7 +480,10 @@ function update(dt) {
         if (qualifies(scores, score)) {
           entry = createEntry();
           setState('entry');
-        } else setState('over');
+        } else {
+          setState('over');
+          play('gameOver');
+        }
         phase = 'run';
       }
     }
@@ -511,6 +517,7 @@ function update(dt) {
     if (!e.burst) continue;
     const [x, y] = Q(e.lane + 0.5, e.z);
     burst(x, y, FOE, 'kill');
+    play('enemyBurst');
     ents.push(...enemyType(e).onKill(e, { web }));
   }
   ents = ents.filter((e) => !e.gone);
@@ -537,6 +544,7 @@ function update(dt) {
     if (shootSpike(spikes, b.lane, b.z)) {
       const [x, y] = Q(b.lane + 0.5, b.z);
       burst(x, y, '#4dff88', 'spike');
+      play('spikeHit');
       bullets.splice(bi, 1);
     }
   }
@@ -573,6 +581,7 @@ function update(dt) {
     bullets = [];
     shots = [];
     play('levelClear');
+    play('warp');
   }
 }
 
